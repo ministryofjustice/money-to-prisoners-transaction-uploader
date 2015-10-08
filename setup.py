@@ -32,4 +32,5 @@ setup(
     classifiers=[
         'Intended Audience :: Python Developers',
     ],
+    test_suite='tests'
 )
