@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from collections import namedtuple
 
-from bankline_parser.data_services import parse_file
+from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
 from pysftp import Connection
 
@@ -78,7 +78,7 @@ def upload_transactions_from_files(files):
 
 def get_transactions_from_file(filename):
     with open(filename) as f:
-        data_services_file = parse_file(f)
+        data_services_file = parse(f)
 
     if not data_services_file.is_valid():
         raise ValueError("%s invalid: %s" % (filename, data_services_file.errors))
