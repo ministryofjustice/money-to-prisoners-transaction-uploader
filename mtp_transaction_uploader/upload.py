@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from collections import namedtuple
 
-from bankline_parser.data_services import parse_file
+from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
 from pysftp import Connection
 
@@ -12,6 +12,7 @@ from .api_client import get_authenticated_connection
 from . import settings
 
 DATE_FORMAT = '%d%m%y'
+SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
 
 ref_pattern = re.compile('''
     ([A-Za-z][0-9]{4}[A-Za-z]{2}) # match the prisoner number
@@ -52,6 +53,12 @@ def retrieve_data_services_files():
                 m = file_pattern.match(filename)
 
                 if m:
+                    stat = conn.stat(filename)
+                    if stat.st_size > SIZE_LIMIT_BYTES:
+                        print("%s is too large (%s), download skipped."
+                              % (filename, stat.st_size))
+                        continue
+
                     date = datetime.strptime(m.group(2), DATE_FORMAT)
                     if last_date is None or date > last_date:
                         local_path = os.path.join(settings.DS_NEW_FILES_DIR,
@@ -69,16 +76,17 @@ def retrieve_data_services_files():
 
 
 def upload_transactions_from_files(files):
-    transactions = []
-    for filename in files:
-        transactions += get_transactions_from_file(filename)
     conn = get_authenticated_connection()
-    conn.bank_admin.transactions.post(transactions)
+    for filename in files:
+        print("Processing %s..." % filename, end="")
+        transactions = get_transactions_from_file(filename)
+        conn.bank_admin.transactions.post(transactions)
+        print("done")
 
 
 def get_transactions_from_file(filename):
     with open(filename) as f:
-        data_services_file = parse_file(f)
+        data_services_file = parse(f)
 
     if not data_services_file.is_valid():
         raise ValueError("%s invalid: %s" % (filename, data_services_file.errors))
