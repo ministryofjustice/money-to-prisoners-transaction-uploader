@@ -21,7 +21,7 @@ setup(
     description='Retrieve direct services file, process, and upload transactions',
     long_description=README,
     dependency_links=[
-        'https://github.com/ministryofjustice/bankline-direct-parser/tarball/data-services-parser#egg=bankline-direct-parser'
+        'https://github.com/ministryofjustice/bankline-direct-parser/tarball/master#egg=bankline-direct-parser'
     ],
     install_requires=[
         'requests-oauthlib==0.5.0',
