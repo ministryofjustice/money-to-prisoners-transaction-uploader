@@ -57,7 +57,7 @@ def download_new_files(last_date):
                                                   filename)
                         new_filenames.append(local_path)
                         new_dates.append(date)
-                        conn.get(filename, local_path=local_path)
+                        conn.get(filename, localpath=local_path)
 
     NewFiles = namedtuple('NewFiles', ['new_dates', 'new_filenames'])
     return NewFiles(new_dates, new_filenames)
@@ -88,6 +88,7 @@ def retrieve_data_services_files():
 
     new_dates, new_filenames = download_new_files(last_date)
 
+    new_last_date = None
     # find last dated file
     if len(new_dates) > 0:
         new_last_date = sorted(new_dates)[-1]
@@ -155,6 +156,10 @@ def parse_reference(ref):
 
 def main():
     last_date, files = retrieve_data_services_files()
+    if len(files) == 0:
+        print("No new files available for download.")
+        return
+
     print("Downloaded...")
     for filename in files:
         print(filename)
@@ -162,7 +167,7 @@ def main():
     upload_transactions_from_files(files)
     print("Upload complete.")
 
-    print("Files recorded as processed up to " % last_date)
+    print("Files recorded as processed up to %s" % last_date)
     if (os.path.exists(settings.DS_LAST_DATE_FILE)):
         os.unlink(settings.DS_LAST_DATE_FILE)
     with open(settings.DS_LAST_DATE_FILE, 'w+') as f:

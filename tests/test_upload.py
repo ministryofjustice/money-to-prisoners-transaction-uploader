@@ -292,3 +292,38 @@ class RetrieveNewFilesTestCase(TestCase):
             '/YO1A.REC.#D.444444.D141214',
         ], new_filenames)
         self.assertEqual(datetime(2014, 12, 14).date(), new_last_date.date())
+
+    @mock.patch('mtp_transaction_uploader.upload.Connection')
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    @mock.patch('mtp_transaction_uploader.upload.os')
+    @mock.patch('mtp_transaction_uploader.upload.shutil')
+    @mock.patch('builtins.open')
+    def test_retrieve_new_files_no_files_available(
+        self,
+        mock_open,
+        mock_shutil,
+        mock_os,
+        mock_settings,
+        mock_connection_class
+    ):
+        mock_os.path.exists.side_effect = [False, True]
+        mock_open.return_value = io.StringIO("111214")
+
+        dirlist = []
+
+        mock_connection = mock.MagicMock()
+        mock_connection_class().__enter__.return_value = mock_connection
+
+        mock_connection.listdir.return_value = dirlist
+        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
+
+        mock_settings.ACCOUNT_CODE = '444444'
+        mock_settings.DS_NEW_FILES_DIR = '/'
+        mock_os.path.join = lambda a, b: a + b
+
+        new_last_date, new_filenames = upload.retrieve_data_services_files()
+
+        self.assertFalse(mock_shutil.rmtree.called)
+
+        self.assertEqual([], new_filenames)
+        self.assertEqual(None, new_last_date)
