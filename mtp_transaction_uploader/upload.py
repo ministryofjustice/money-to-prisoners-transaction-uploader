@@ -1,16 +1,16 @@
-import os
-import shutil
-import re
-from datetime import datetime
 from collections import namedtuple
+from datetime import datetime
+import os
+import re
+import shutil
 
-from slumber.exceptions import SlumberHttpBaseException
 from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
 from pysftp import Connection
+from slumber.exceptions import SlumberHttpBaseException
 
-from .api_client import get_authenticated_connection
 from . import settings
+from .api_client import get_authenticated_connection
 
 DATE_FORMAT = '%d%m%y'
 SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
