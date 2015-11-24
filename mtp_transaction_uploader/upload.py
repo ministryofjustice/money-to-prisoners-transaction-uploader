@@ -82,7 +82,7 @@ def retrieve_data_services_files():
 
     # check if we recorded date of last file downloaded
     last_date = None
-    if (os.path.exists(settings.DS_LAST_DATE_FILE)):
+    if os.path.exists(settings.DS_LAST_DATE_FILE):
         with open(settings.DS_LAST_DATE_FILE) as f:
             last_date_str = f.read()
             last_date = datetime.strptime(last_date_str, DATE_FORMAT)
@@ -180,7 +180,7 @@ def main():
     print("Upload complete.")
 
     print("Files recorded as processed up to %s" % last_date)
-    if (os.path.exists(settings.DS_LAST_DATE_FILE)):
+    if os.path.exists(settings.DS_LAST_DATE_FILE):
         os.unlink(settings.DS_LAST_DATE_FILE)
     with open(settings.DS_LAST_DATE_FILE, 'w+') as f:
         f.write(datetime.strftime(last_date, DATE_FORMAT))
