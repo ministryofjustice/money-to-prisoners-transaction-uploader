@@ -5,10 +5,10 @@ from unittest import mock, TestCase
 from mtp_transaction_uploader import upload
 
 
-class ReferenceParsingTestCase(TestCase):
+class CreditReferenceParsingTestCase(TestCase):
 
     def _test_successful_parse(self, reference, prisoner_number, prisoner_dob):
-        parsed_number, parsed_dob = upload.parse_reference(reference)
+        parsed_number, parsed_dob = upload.parse_credit_reference(reference)
         self.assertEqual(parsed_number, prisoner_number)
         self.assertEqual(parsed_dob, prisoner_dob)
 
@@ -48,10 +48,10 @@ class ReferenceParsingTestCase(TestCase):
         )
 
     def test_invalid_prisoner_number_does_not_parse(self):
-        self.assertEqual(upload.parse_reference('A1234Y 09/12/1986'), None)
+        self.assertEqual(upload.parse_credit_reference('A1234Y 09/12/1986'), None)
 
     def test_invalid_year_does_not_parse(self):
-        self.assertEqual(upload.parse_reference('A1234GY 1/1/1'), None)
+        self.assertEqual(upload.parse_credit_reference('A1234GY 1/1/1'), None)
 
 
 class FilenameParsingTestCase(TestCase):
