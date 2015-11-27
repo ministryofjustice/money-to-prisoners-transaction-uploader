@@ -12,14 +12,9 @@ Only python 3.4 supported.
 
 Usage
 -----
+The following environment variables determine how the uploader works:
 
-.. code-block:: bash
-
-    /> upload-transactions
-
-(After setting the following env variables:
-
-.. code-block:: 
+.. code-block::
 
     SFTP_HOST - host to download data services files from
     SFTP_USER - sftp username
@@ -36,5 +31,9 @@ Usage
     DS_LAST_DATE_FILE - path of file in which to store last date processed
     DS_NEW_FILES_DIR - path of directory in which to store downloaded files
 
+Testing
+-------
 
-)
+.. code-block::
+
+    python -m unittest

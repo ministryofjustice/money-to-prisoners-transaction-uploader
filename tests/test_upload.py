@@ -1,6 +1,6 @@
-from unittest import mock, TestCase
 from datetime import datetime
 import io
+from unittest import mock, TestCase
 
 from mtp_transaction_uploader import upload
 

@@ -1,9 +1,9 @@
-import slumber
-from requests.exceptions import HTTPError
 from urllib.parse import urljoin
 
-from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import LegacyApplicationClient
+from requests.exceptions import HTTPError
+from requests_oauthlib import OAuth2Session
+import slumber
 
 from . import settings
 
@@ -38,5 +38,4 @@ def get_authenticated_connection():
         #   => invalid credentials
         if hasattr(e, 'response') and e.response.status_code == 401:
             return None
-        raise(e)
-    return None
+        raise e
