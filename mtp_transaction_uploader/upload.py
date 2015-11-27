@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from collections import namedtuple
 
+from slumber.exceptions import SlumberHttpBaseException
 from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
 from pysftp import Connection
@@ -101,10 +102,15 @@ def retrieve_data_services_files():
 def upload_transactions_from_files(files):
     conn = get_authenticated_connection()
     for filename in files:
-        print("Processing %s..." % filename, end="")
+        print("Processing %s..." % filename)
         transactions = get_transactions_from_file(filename)
-        conn.bank_admin.transactions.post(transactions)
-        print("done")
+        if transactions:
+            try:
+                conn.bank_admin.transactions.post(transactions)
+                print("...done.")
+            except SlumberHttpBaseException as e:
+                print(getattr(e, 'content'))
+                print('...failed.')
 
 
 def get_transactions_from_file(filename):
@@ -112,10 +118,16 @@ def get_transactions_from_file(filename):
         data_services_file = parse(f)
 
     if not data_services_file.is_valid():
-        raise ValueError("%s invalid: %s" % (filename, data_services_file.errors))
+        print("%s invalid: %s" % (filename, data_services_file.errors))
+        return None
+
+    if not data_services_file.accounts or\
+            not data_services_file.accounts[0].records:
+        print("...no records found.")
+        return None
 
     transactions = []
-    for record in data_services_file:
+    for record in data_services_file.accounts[0].records:
         if (record.transaction_code == TransactionCode.credit_bacs_credit or
                 record.transaction_code == TransactionCode.credit_sundry_credit):
             transaction = {}
@@ -124,7 +136,7 @@ def get_transactions_from_file(filename):
             transaction['sender_account_number'] = record.originators_account_number
             transaction['sender_name'] = record.transaction_description
             transaction['reference'] = record.reference_number
-            transaction['received_at'] = record.date
+            transaction['received_at'] = record.date.isoformat()
 
             parsed_ref = parse_reference(record.reference_number)
             if parsed_ref:
