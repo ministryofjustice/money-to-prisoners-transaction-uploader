@@ -124,7 +124,7 @@ def get_transactions_from_file(filename):
             transaction['sender_account_number'] = record.originators_account_number
             transaction['sender_name'] = record.transaction_description
             transaction['reference'] = record.reference_number
-            transaction['received_at'] = record.date
+            transaction['received_at'] = record.date.isoformat()
 
             parsed_ref = parse_reference(record.reference_number)
             if parsed_ref:
