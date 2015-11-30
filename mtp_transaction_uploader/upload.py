@@ -29,9 +29,9 @@ ref_pattern = re.compile(
 )
 file_pattern_str = (
     '''
-    YO1A\.REC\.\#D\.               # static file format
-    (%(code)s)\.                  # our unique account code
-    D([0-9]{6})                   # date that file was generated (ddmmyy)
+    Y01A\.CARS\.\#D\.             # static file format
+    %(code)s\.                    # our unique account code
+    D(?P<date>[0-9]{6})           # date that file was generated (ddmmyy)
     '''
 )
 
@@ -70,7 +70,7 @@ def parse_filename(filename, account_code):
     )
     m = file_pattern.match(filename)
     if m:
-        return datetime.strptime(m.group(2), DATE_FORMAT)
+        return datetime.strptime(m.group('date'), DATE_FORMAT)
     return None
 
 
