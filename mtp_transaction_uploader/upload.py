@@ -29,9 +29,9 @@ ref_pattern = re.compile(
 )
 file_pattern_str = (
     '''
-    YO1A\.REC\.\#D\.               # static file format
-    (%(code)s)\.                  # our unique account code
-    D([0-9]{6})                   # date that file was generated (ddmmyy)
+    Y01A\.CARS\.\#D\.             # static file format
+    %(code)s\.                    # our unique account code
+    D(?P<date>[0-9]{6})           # date that file was generated (ddmmyy)
     '''
 )
 
@@ -49,7 +49,7 @@ def download_new_files(last_date):
                 if date:
                     stat = conn.stat(filename)
                     if stat.st_size > SIZE_LIMIT_BYTES:
-                        print("%s is too large (%s), download skipped."
+                        print('%s is too large (%s), download skipped.'
                               % (filename, stat.st_size))
                         continue
 
@@ -70,7 +70,7 @@ def parse_filename(filename, account_code):
     )
     m = file_pattern.match(filename)
     if m:
-        return datetime.strptime(m.group(2), DATE_FORMAT)
+        return datetime.strptime(m.group('date'), DATE_FORMAT)
     return None
 
 
@@ -102,12 +102,12 @@ def retrieve_data_services_files():
 def upload_transactions_from_files(files):
     conn = get_authenticated_connection()
     for filename in files:
-        print("Processing %s..." % filename)
+        print('Processing %s...' % filename)
         transactions = get_transactions_from_file(filename)
         if transactions:
             try:
                 conn.bank_admin.transactions.post(transactions)
-                print("...done.")
+                print('...done.')
             except SlumberHttpBaseException as e:
                 print(getattr(e, 'content'))
                 print('...failed.')
@@ -118,25 +118,26 @@ def get_transactions_from_file(filename):
         data_services_file = parse(f)
 
     if not data_services_file.is_valid():
-        print("%s invalid: %s" % (filename, data_services_file.errors))
+        print('%s invalid: %s' % (filename, data_services_file.errors))
         return None
 
-    if not data_services_file.accounts or\
+    if not data_services_file.accounts or \
             not data_services_file.accounts[0].records:
-        print("...no records found.")
+        print('...no records found.')
         return None
 
     transactions = []
     for record in data_services_file.accounts[0].records:
         if (record.transaction_code == TransactionCode.credit_bacs_credit or
                 record.transaction_code == TransactionCode.credit_sundry_credit):
-            transaction = {}
-            transaction['amount'] = record.amount
-            transaction['sender_sort_code'] = record.originators_sort_code
-            transaction['sender_account_number'] = record.originators_account_number
-            transaction['sender_name'] = record.transaction_description
-            transaction['reference'] = record.reference_number
-            transaction['received_at'] = record.date.isoformat()
+            transaction = {
+                'amount': record.amount,
+                'sender_sort_code': record.originators_sort_code,
+                'sender_account_number': record.originators_account_number,
+                'sender_name': record.transaction_description,
+                'reference': record.reference_number,
+                'received_at': record.date.isoformat(),
+            }
 
             parsed_ref = parse_reference(record.reference_number)
             if parsed_ref:
@@ -160,7 +161,7 @@ def parse_reference(ref):
 
             # set correct century for 2 digit year
             if dob.year > datetime.today().year - 10:
-                dob = dob.replace(year=dob.year-100)
+                dob = dob.replace(year=dob.year - 100)
 
         ParsedReference = namedtuple('ParsedReference', ['prisoner_number', 'prisoner_dob'])
         return ParsedReference(m.group(1), dob)
@@ -169,17 +170,17 @@ def parse_reference(ref):
 def main():
     last_date, files = retrieve_data_services_files()
     if len(files) == 0:
-        print("No new files available for download.")
+        print('No new files available for download.')
         return
 
-    print("Downloaded...")
+    print('Downloaded...')
     for filename in files:
         print(filename)
-    print("Uploading...")
+    print('Uploading...')
     upload_transactions_from_files(files)
-    print("Upload complete.")
+    print('Upload complete.')
 
-    print("Files recorded as processed up to %s" % last_date)
+    print('Files recorded as processed up to %s' % last_date)
     if os.path.exists(settings.DS_LAST_DATE_FILE):
         os.unlink(settings.DS_LAST_DATE_FILE)
     with open(settings.DS_LAST_DATE_FILE, 'w+') as f:
