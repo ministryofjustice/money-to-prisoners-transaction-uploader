@@ -57,13 +57,13 @@ class ReferenceParsingTestCase(TestCase):
 class FilenameParsingTestCase(TestCase):
 
     def test_correct_format_returns_correct_date(self):
-        filename = 'YO1A.REC.#D.444444.D091214'
+        filename = 'Y01A.CARS.#D.444444.D091214'
         expected_date = datetime(2014, 12, 9).date()
         parsed_datetime = upload.parse_filename(filename, '444444')
         self.assertEqual(expected_date, parsed_datetime.date())
 
     def test_correct_format_returns_correct_date_pre_2000(self):
-        filename = 'YO1A.REC.#D.444444.D091299'
+        filename = 'Y01A.CARS.#D.444444.D091299'
         expected_date = datetime(1999, 12, 9).date()
         parsed_datetime = upload.parse_filename(filename, '444444')
         self.assertEqual(expected_date, parsed_datetime.date())
@@ -74,7 +74,7 @@ class FilenameParsingTestCase(TestCase):
         self.assertEqual(None, parsed_datetime)
 
     def test_incorrect_account_code_returns_none(self):
-        filename = 'YO1A.REC.#D.555555.D091214'
+        filename = 'Y01A.CARS.#D.555555.D091214'
         parsed_datetime = upload.parse_filename(filename, '444444')
         self.assertEqual(None, parsed_datetime)
 
@@ -85,12 +85,12 @@ class FileDownloadTestCase(TestCase):
 
     def test_download_new_files(self, mock_connection_class, mock_settings):
         dirlist = [
-            'YO1A.REC.#D.444444.D091214',
-            'YO1A.REC.#D.444444.D101214',
-            'YO1A.REC.#D.444444.D111214',
-            'YO1A.REC.#D.444444.D121214',
-            'YO1A.REC.#D.444444.D131214',
-            'YO1A.REC.#D.444444.D141214',
+            'Y01A.CARS.#D.444444.D091214',
+            'Y01A.CARS.#D.444444.D101214',
+            'Y01A.CARS.#D.444444.D111214',
+            'Y01A.CARS.#D.444444.D121214',
+            'Y01A.CARS.#D.444444.D131214',
+            'Y01A.CARS.#D.444444.D141214',
         ]
 
         mock_connection = mock.MagicMock()
@@ -113,12 +113,12 @@ class FileDownloadTestCase(TestCase):
             datetime(2014, 12, 14).date(),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
-            '/YO1A.REC.#D.444444.D091214',
-            '/YO1A.REC.#D.444444.D101214',
-            '/YO1A.REC.#D.444444.D111214',
-            '/YO1A.REC.#D.444444.D121214',
-            '/YO1A.REC.#D.444444.D131214',
-            '/YO1A.REC.#D.444444.D141214',
+            '/Y01A.CARS.#D.444444.D091214',
+            '/Y01A.CARS.#D.444444.D101214',
+            '/Y01A.CARS.#D.444444.D111214',
+            '/Y01A.CARS.#D.444444.D121214',
+            '/Y01A.CARS.#D.444444.D131214',
+            '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
 
     def test_download_new_files_skips_other_accounts(
@@ -127,12 +127,12 @@ class FileDownloadTestCase(TestCase):
         mock_settings
     ):
         dirlist = [
-            'YO1A.REC.#D.444444.D091214',
-            'YO1A.REC.#D.444444.D101214',
-            'YO1A.REC.#D.444444.D111214',
-            'YO1A.REC.#D.444444.D121214',
-            'YO1A.REC.#D.555555.D131214',
-            'YO1A.REC.#D.444444.D141214',
+            'Y01A.CARS.#D.444444.D091214',
+            'Y01A.CARS.#D.444444.D101214',
+            'Y01A.CARS.#D.444444.D111214',
+            'Y01A.CARS.#D.444444.D121214',
+            'Y01A.CARS.#D.555555.D131214',
+            'Y01A.CARS.#D.444444.D141214',
         ]
 
         mock_connection = mock.MagicMock()
@@ -154,11 +154,11 @@ class FileDownloadTestCase(TestCase):
             datetime(2014, 12, 14).date(),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
-            '/YO1A.REC.#D.444444.D091214',
-            '/YO1A.REC.#D.444444.D101214',
-            '/YO1A.REC.#D.444444.D111214',
-            '/YO1A.REC.#D.444444.D121214',
-            '/YO1A.REC.#D.444444.D141214',
+            '/Y01A.CARS.#D.444444.D091214',
+            '/Y01A.CARS.#D.444444.D101214',
+            '/Y01A.CARS.#D.444444.D111214',
+            '/Y01A.CARS.#D.444444.D121214',
+            '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
 
     def test_download_new_files_skips_old_files(
@@ -167,12 +167,12 @@ class FileDownloadTestCase(TestCase):
         mock_settings
     ):
         dirlist = [
-            'YO1A.REC.#D.444444.D091214',
-            'YO1A.REC.#D.444444.D101214',
-            'YO1A.REC.#D.444444.D111214',
-            'YO1A.REC.#D.444444.D121214',
-            'YO1A.REC.#D.444444.D131214',
-            'YO1A.REC.#D.444444.D141214',
+            'Y01A.CARS.#D.444444.D091214',
+            'Y01A.CARS.#D.444444.D101214',
+            'Y01A.CARS.#D.444444.D111214',
+            'Y01A.CARS.#D.444444.D121214',
+            'Y01A.CARS.#D.444444.D131214',
+            'Y01A.CARS.#D.444444.D141214',
         ]
 
         mock_connection = mock.MagicMock()
@@ -192,9 +192,9 @@ class FileDownloadTestCase(TestCase):
             datetime(2014, 12, 14).date(),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
-            '/YO1A.REC.#D.444444.D121214',
-            '/YO1A.REC.#D.444444.D131214',
-            '/YO1A.REC.#D.444444.D141214',
+            '/Y01A.CARS.#D.444444.D121214',
+            '/Y01A.CARS.#D.444444.D131214',
+            '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
 
     def test_download_new_files_skips_large_files(
@@ -203,12 +203,12 @@ class FileDownloadTestCase(TestCase):
         mock_settings
     ):
         dirlist = [
-            'YO1A.REC.#D.444444.D091214',
-            'YO1A.REC.#D.444444.D101214',
-            'YO1A.REC.#D.444444.D111214',
-            'YO1A.REC.#D.444444.D121214',
-            'YO1A.REC.#D.444444.D131214',
-            'YO1A.REC.#D.444444.D141214',
+            'Y01A.CARS.#D.444444.D091214',
+            'Y01A.CARS.#D.444444.D101214',
+            'Y01A.CARS.#D.444444.D111214',
+            'Y01A.CARS.#D.444444.D121214',
+            'Y01A.CARS.#D.444444.D131214',
+            'Y01A.CARS.#D.444444.D141214',
         ]
 
         mock_connection = mock.MagicMock()
@@ -237,11 +237,11 @@ class FileDownloadTestCase(TestCase):
             datetime(2014, 12, 14).date(),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
-            '/YO1A.REC.#D.444444.D091214',
-            '/YO1A.REC.#D.444444.D101214',
-            '/YO1A.REC.#D.444444.D111214',
-            '/YO1A.REC.#D.444444.D121214',
-            '/YO1A.REC.#D.444444.D141214',
+            '/Y01A.CARS.#D.444444.D091214',
+            '/Y01A.CARS.#D.444444.D101214',
+            '/Y01A.CARS.#D.444444.D111214',
+            '/Y01A.CARS.#D.444444.D121214',
+            '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
 
 
@@ -264,12 +264,12 @@ class RetrieveNewFilesTestCase(TestCase):
         mock_open.return_value = io.StringIO("111214")
 
         dirlist = [
-            'YO1A.REC.#D.444444.D091214',
-            'YO1A.REC.#D.444444.D101214',
-            'YO1A.REC.#D.444444.D111214',
-            'YO1A.REC.#D.444444.D121214',
-            'YO1A.REC.#D.444444.D131214',
-            'YO1A.REC.#D.444444.D141214',
+            'Y01A.CARS.#D.444444.D091214',
+            'Y01A.CARS.#D.444444.D101214',
+            'Y01A.CARS.#D.444444.D111214',
+            'Y01A.CARS.#D.444444.D121214',
+            'Y01A.CARS.#D.444444.D131214',
+            'Y01A.CARS.#D.444444.D141214',
         ]
 
         mock_connection = mock.MagicMock()
@@ -287,9 +287,9 @@ class RetrieveNewFilesTestCase(TestCase):
         self.assertFalse(mock_shutil.rmtree.called)
 
         self.assertEqual([
-            '/YO1A.REC.#D.444444.D121214',
-            '/YO1A.REC.#D.444444.D131214',
-            '/YO1A.REC.#D.444444.D141214',
+            '/Y01A.CARS.#D.444444.D121214',
+            '/Y01A.CARS.#D.444444.D131214',
+            '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
         self.assertEqual(datetime(2014, 12, 14).date(), new_last_date.date())
 
