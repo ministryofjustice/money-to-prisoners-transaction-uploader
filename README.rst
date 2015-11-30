@@ -36,4 +36,4 @@ Testing
 
 .. code-block::
 
-    python -m unittest
+    nosetests
