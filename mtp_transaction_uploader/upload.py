@@ -15,7 +15,7 @@ from .api_client import get_authenticated_connection
 DATE_FORMAT = '%d%m%y'
 SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
 
-ref_pattern = re.compile(
+credit_ref_pattern = re.compile(
     '''
     ([A-Za-z][0-9]{4}[A-Za-z]{2}) # match the prisoner number
     .*?                           # skip until next digit
@@ -132,25 +132,37 @@ def get_transactions_from_file(filename):
                 record.transaction_code == TransactionCode.credit_sundry_credit):
             transaction = {
                 'amount': record.amount,
+                'category': 'credit',
                 'sender_sort_code': record.originators_sort_code,
                 'sender_account_number': record.originators_account_number,
                 'sender_name': record.transaction_description,
                 'reference': record.reference_number,
-                'received_at': record.date.isoformat(),
+                'received_at': record.date.isoformat()
             }
 
-            parsed_ref = parse_reference(record.reference_number)
+            parsed_ref = parse_credit_reference(record.reference_number)
             if parsed_ref:
                 number, dob = parsed_ref
                 transaction['prisoner_number'] = number
                 transaction['prisoner_dob'] = parsed_ref
-
             transactions.append(transaction)
+
+        elif record.transaction_code == TransactionCode.debit_sundry_debit:
+            transaction = {
+                'amount': record.amount,
+                'category': 'debit',
+                'sender_sort_code': record.originators_sort_code,
+                'sender_account_number': record.originators_account_number,
+                'sender_name': record.transaction_description,
+                'reference': record.reference_number,
+                'received_at': record.date,
+            }
+
     return transactions
 
 
-def parse_reference(ref):
-    m = ref_pattern.match(ref)
+def parse_credit_reference(ref):
+    m = credit_ref_pattern.match(ref)
 
     if m:
         date_str = '%s/%s/%s' % (m.group(2), m.group(3), m.group(4))
