@@ -13,5 +13,4 @@ API_CLIENT_ID = os.environ.get('API_CLIENT_ID', 'bank-admin')
 API_CLIENT_SECRET = os.environ.get('API_CLIENT_SECRET', 'bank-admin')
 API_URL = os.environ.get('API_URL', 'http://localhost:8000')
 
-DS_LAST_DATE_FILE = os.environ.get('DS_LAST_DATE_FILE', '/tmp/ds_last_date')
 DS_NEW_FILES_DIR = os.environ.get('DS_NEW_FILES_DIR', '/tmp/ds_new_files')

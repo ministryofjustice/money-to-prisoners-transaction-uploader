@@ -80,12 +80,13 @@ def retrieve_data_services_files():
         shutil.rmtree(settings.DS_NEW_FILES_DIR)
     os.mkdir(settings.DS_NEW_FILES_DIR)
 
-    # check if we recorded date of last file downloaded
+    # check date of most recent transactions uploaded
     last_date = None
-    if os.path.exists(settings.DS_LAST_DATE_FILE):
-        with open(settings.DS_LAST_DATE_FILE) as f:
-            last_date_str = f.read()
-            last_date = datetime.strptime(last_date_str, DATE_FORMAT)
+    conn = get_authenticated_connection()
+    response = conn.bank_admin.transactions.get(ordering='-received_at', limit=1)
+    if response.get('results'):
+        last_date = response['results'][0]['received_at'][:10]
+        last_date = datetime.strptime(last_date, '%Y-%m-%d')
 
     new_dates, new_filenames = download_new_files(last_date)
 
@@ -191,9 +192,3 @@ def main():
     print('Uploading...')
     upload_transactions_from_files(files)
     print('Upload complete.')
-
-    print('Files recorded as processed up to %s' % last_date)
-    if os.path.exists(settings.DS_LAST_DATE_FILE):
-        os.unlink(settings.DS_LAST_DATE_FILE)
-    with open(settings.DS_LAST_DATE_FILE, 'w+') as f:
-        f.write(datetime.strftime(last_date, DATE_FORMAT))

@@ -1,5 +1,4 @@
 from datetime import datetime
-import io
 from unittest import mock, TestCase
 
 from mtp_transaction_uploader import upload
@@ -251,17 +250,18 @@ class RetrieveNewFilesTestCase(TestCase):
     @mock.patch('mtp_transaction_uploader.upload.settings')
     @mock.patch('mtp_transaction_uploader.upload.os')
     @mock.patch('mtp_transaction_uploader.upload.shutil')
-    @mock.patch('builtins.open')
+    @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
     def test_retrieve_new_files(
         self,
-        mock_open,
+        mock_get_connection,
         mock_shutil,
         mock_os,
         mock_settings,
         mock_connection_class
     ):
-        mock_os.path.exists.side_effect = [False, True]
-        mock_open.return_value = io.StringIO("111214")
+        mock_os.path.exists.side_effect = [False]
+        mock_get_connection().bank_admin.transactions.get.return_value =\
+            {'count': 1, 'results': [{'received_at': '2014-12-115T19:09:02Z'}]}
 
         dirlist = [
             'Y01A.CARS.#D.444444.D091214',
@@ -297,17 +297,18 @@ class RetrieveNewFilesTestCase(TestCase):
     @mock.patch('mtp_transaction_uploader.upload.settings')
     @mock.patch('mtp_transaction_uploader.upload.os')
     @mock.patch('mtp_transaction_uploader.upload.shutil')
-    @mock.patch('builtins.open')
+    @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
     def test_retrieve_new_files_no_files_available(
         self,
-        mock_open,
+        mock_get_connection,
         mock_shutil,
         mock_os,
         mock_settings,
         mock_connection_class
     ):
-        mock_os.path.exists.side_effect = [False, True]
-        mock_open.return_value = io.StringIO("111214")
+        mock_os.path.exists.side_effect = [False]
+        mock_get_connection().bank_admin.transactions.get.return_value =\
+            {'count': 1, 'results': [{'received_at': '2014-12-115T19:09:02Z'}]}
 
         dirlist = []
 
