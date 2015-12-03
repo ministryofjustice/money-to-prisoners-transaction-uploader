@@ -80,12 +80,13 @@ def retrieve_data_services_files():
         shutil.rmtree(settings.DS_NEW_FILES_DIR)
     os.mkdir(settings.DS_NEW_FILES_DIR)
 
-    # check if we recorded date of last file downloaded
+    # check date of most recent transactions uploaded
     last_date = None
-    if os.path.exists(settings.DS_LAST_DATE_FILE):
-        with open(settings.DS_LAST_DATE_FILE) as f:
-            last_date_str = f.read()
-            last_date = datetime.strptime(last_date_str, DATE_FORMAT)
+    conn = get_authenticated_connection()
+    response = conn.bank_admin.transactions.get(ordering='-received_at', limit=1)
+    if response.get('results'):
+        last_date = response['results'][0]['received_at'][:10]
+        last_date = datetime.strptime(last_date, '%Y-%m-%d')
 
     new_dates, new_filenames = download_new_files(last_date)
 
@@ -106,11 +107,22 @@ def upload_transactions_from_files(files):
         transactions = get_transactions_from_file(filename)
         if transactions:
             try:
-                conn.bank_admin.transactions.post(transactions)
+                conn.bank_admin.transactions.post(clean_request_data(transactions))
                 print('...done.')
             except SlumberHttpBaseException as e:
                 print(getattr(e, 'content'))
                 print('...failed.')
+
+
+def clean_request_data(data):
+    cleaned_data = []
+    for item in data:
+        cleaned_item = {}
+        for key in item:
+            if item[key] is not None:
+                cleaned_item[key] = item[key]
+        cleaned_data.append(cleaned_item)
+    return cleaned_data
 
 
 def get_transactions_from_file(filename):
@@ -155,28 +167,30 @@ def get_transactions_from_file(filename):
                 'sender_account_number': record.originators_account_number,
                 'sender_name': record.transaction_description,
                 'reference': record.reference_number,
-                'received_at': record.date,
+                'received_at': record.date.isoformat(),
             }
+            transactions.append(transaction)
 
     return transactions
 
 
 def parse_credit_reference(ref):
-    m = credit_ref_pattern.match(ref)
+    if ref:
+        m = credit_ref_pattern.match(ref)
+        if m:
+            date_str = '%s/%s/%s' % (m.group(2), m.group(3), m.group(4))
+            try:
+                dob = datetime.strptime(date_str, '%d/%m/%Y')
+            except ValueError:
+                dob = datetime.strptime(date_str, '%d/%m/%y')
 
-    if m:
-        date_str = '%s/%s/%s' % (m.group(2), m.group(3), m.group(4))
-        try:
-            dob = datetime.strptime(date_str, '%d/%m/%Y')
-        except ValueError:
-            dob = datetime.strptime(date_str, '%d/%m/%y')
+                # set correct century for 2 digit year
+                if dob.year > datetime.today().year - 10:
+                    dob = dob.replace(year=dob.year - 100)
 
-            # set correct century for 2 digit year
-            if dob.year > datetime.today().year - 10:
-                dob = dob.replace(year=dob.year - 100)
-
-        ParsedReference = namedtuple('ParsedReference', ['prisoner_number', 'prisoner_dob'])
-        return ParsedReference(m.group(1), dob)
+            ParsedReference = namedtuple('ParsedReference',
+                                         ['prisoner_number', 'prisoner_dob'])
+            return ParsedReference(m.group(1), dob)
 
 
 def main():
@@ -191,9 +205,3 @@ def main():
     print('Uploading...')
     upload_transactions_from_files(files)
     print('Upload complete.')
-
-    print('Files recorded as processed up to %s' % last_date)
-    if os.path.exists(settings.DS_LAST_DATE_FILE):
-        os.unlink(settings.DS_LAST_DATE_FILE)
-    with open(settings.DS_LAST_DATE_FILE, 'w+') as f:
-        f.write(datetime.strftime(last_date, DATE_FORMAT))
