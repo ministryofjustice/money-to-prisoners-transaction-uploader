@@ -107,11 +107,22 @@ def upload_transactions_from_files(files):
         transactions = get_transactions_from_file(filename)
         if transactions:
             try:
-                conn.bank_admin.transactions.post(transactions)
+                conn.bank_admin.transactions.post(clean_request_data(transactions))
                 print('...done.')
             except SlumberHttpBaseException as e:
                 print(getattr(e, 'content'))
                 print('...failed.')
+
+
+def clean_request_data(data):
+    cleaned_data = []
+    for item in data:
+        cleaned_item = {}
+        for key in item:
+            if item[key] is not None:
+                cleaned_item[key] = item[key]
+        cleaned_data.append(cleaned_item)
+    return cleaned_data
 
 
 def get_transactions_from_file(filename):
@@ -156,28 +167,30 @@ def get_transactions_from_file(filename):
                 'sender_account_number': record.originators_account_number,
                 'sender_name': record.transaction_description,
                 'reference': record.reference_number,
-                'received_at': record.date,
+                'received_at': record.date.isoformat(),
             }
+            transactions.append(transaction)
 
     return transactions
 
 
 def parse_credit_reference(ref):
-    m = credit_ref_pattern.match(ref)
+    if ref:
+        m = credit_ref_pattern.match(ref)
+        if m:
+            date_str = '%s/%s/%s' % (m.group(2), m.group(3), m.group(4))
+            try:
+                dob = datetime.strptime(date_str, '%d/%m/%Y')
+            except ValueError:
+                dob = datetime.strptime(date_str, '%d/%m/%y')
 
-    if m:
-        date_str = '%s/%s/%s' % (m.group(2), m.group(3), m.group(4))
-        try:
-            dob = datetime.strptime(date_str, '%d/%m/%Y')
-        except ValueError:
-            dob = datetime.strptime(date_str, '%d/%m/%y')
+                # set correct century for 2 digit year
+                if dob.year > datetime.today().year - 10:
+                    dob = dob.replace(year=dob.year - 100)
 
-            # set correct century for 2 digit year
-            if dob.year > datetime.today().year - 10:
-                dob = dob.replace(year=dob.year - 100)
-
-        ParsedReference = namedtuple('ParsedReference', ['prisoner_number', 'prisoner_dob'])
-        return ParsedReference(m.group(1), dob)
+            ParsedReference = namedtuple('ParsedReference',
+                                         ['prisoner_number', 'prisoner_dob'])
+            return ParsedReference(m.group(1), dob)
 
 
 def main():
