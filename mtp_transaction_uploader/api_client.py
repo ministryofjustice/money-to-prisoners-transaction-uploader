@@ -21,21 +21,14 @@ def get_authenticated_connection():
         )
     )
 
-    try:
-        session.fetch_token(
-            token_url=REQUEST_TOKEN_URL,
-            username=settings.API_USERNAME,
-            password=settings.API_PASSWORD,
-            client_id=settings.API_CLIENT_ID,
-            client_secret=settings.API_CLIENT_SECRET
-        )
+    session.fetch_token(
+        token_url=REQUEST_TOKEN_URL,
+        username=settings.API_USERNAME,
+        password=settings.API_PASSWORD,
+        client_id=settings.API_CLIENT_ID,
+        client_secret=settings.API_CLIENT_SECRET
+    )
 
-        return slumber.API(
-            base_url=settings.API_URL, session=session
-        )
-    except HTTPError as e:
-        # return None if response.status_code == 401
-        #   => invalid credentials
-        if hasattr(e, 'response') and e.response.status_code == 401:
-            return None
-        raise e
+    return slumber.API(
+        base_url=settings.API_URL, session=session
+    )
