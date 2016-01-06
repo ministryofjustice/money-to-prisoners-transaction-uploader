@@ -1,3 +1,5 @@
+import logging
+import logging.config
 import os
 import re
 import sys
@@ -6,6 +8,44 @@ from mtp_transaction_uploader import settings
 from mtp_transaction_uploader.upload import main
 
 if __name__ == '__main__':
+    # setup logging and exception handling
+    logging_conf = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'formatters': {
+            'simple': {
+                'format': '[%(levelname)s] %(message)s'
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
+        },
+        'root': {
+            'level': 'INFO',
+            'handlers': ['console'],
+        },
+    }
+    sentry = None
+    if os.environ.get('SENTRY_DSN'):
+        from raven import Client
+
+        sentry = Client(
+            dsn=os.environ['SENTRY_DSN'],
+            release=os.environ.get('APP_GIT_COMMIT', 'unknown'),
+        )
+        logging_conf['handlers']['sentry'] = {
+            'level': 'ERROR',
+            'class': 'raven.handlers.logging.SentryHandler',
+            'client': sentry,
+        }
+        logging_conf['root']['handlers'].append('sentry')
+    logging.config.dictConfig(logging_conf)
+    logger = logging.getLogger()
+
     # ensure all required parameters are set
     re_env_name = re.compile(r'^[A-Z_]+$')
     missing_params = []
@@ -15,23 +55,16 @@ if __name__ == '__main__':
         if not getattr(settings, param):
             missing_params.append(param)
     if missing_params:
-        print('Missing environment variables: ' +
-              ', '.join(missing_params), file=sys.stderr)
+        logger.error('Missing environment variables: ' +
+                     ', '.join(missing_params))
         sys.exit(1)
-
-    # sentry exception handling
-    client = None
-    if os.environ.get('SENTRY_DSN'):
-        from raven import Client
-
-        client = Client(
-            dsn=os.environ['SENTRY_DSN'],
-            release=os.environ.get('APP_GIT_COMMIT', 'unknown'),
-        )
 
     try:
         # run the transaction uploader
         main()
     except:
-        if client:
-            client.captureException()
+        if sentry:
+            sentry.captureException()
+        else:
+            logger.exception('Unhandled error')
+        sys.exit(2)

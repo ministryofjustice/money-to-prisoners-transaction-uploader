@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import datetime
+import logging
 import os
 import re
 import shutil
@@ -11,6 +12,8 @@ from slumber.exceptions import SlumberHttpBaseException
 
 from . import settings
 from .api_client import get_authenticated_connection
+
+logger = logging.getLogger()
 
 DATE_FORMAT = '%d%m%y'
 SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
@@ -49,8 +52,8 @@ def download_new_files(last_date):
                 if date:
                     stat = conn.stat(filename)
                     if stat.st_size > SIZE_LIMIT_BYTES:
-                        print('%s is too large (%s), download skipped.'
-                              % (filename, stat.st_size))
+                        logger.error('%s is too large (%s), download skipped.'
+                                     % (filename, stat.st_size))
                         continue
 
                     if last_date is None or date.date() > last_date.date():
@@ -103,15 +106,14 @@ def retrieve_data_services_files():
 def upload_transactions_from_files(files):
     conn = get_authenticated_connection()
     for filename in files:
-        print('Processing %s...' % filename)
+        logger.info('Processing %s...' % filename)
         transactions = get_transactions_from_file(filename)
         if transactions:
             try:
                 conn.bank_admin.transactions.post(clean_request_data(transactions))
-                print('...done.')
+                logger.info('...done.')
             except SlumberHttpBaseException as e:
-                print(getattr(e, 'content'))
-                print('...failed.')
+                logger.error('...failed.\n' + getattr(e, 'content', ''))
 
 
 def clean_request_data(data):
@@ -130,12 +132,12 @@ def get_transactions_from_file(filename):
         data_services_file = parse(f)
 
     if not data_services_file.is_valid():
-        print('%s invalid: %s' % (filename, data_services_file.errors))
+        logger.error('%s invalid: %s' % (filename, data_services_file.errors))
         return None
 
     if not data_services_file.accounts or \
             not data_services_file.accounts[0].records:
-        print('...no records found.')
+        logger.info('...no records found.')
         return None
 
     transactions = []
@@ -196,12 +198,10 @@ def parse_credit_reference(ref):
 def main():
     last_date, files = retrieve_data_services_files()
     if len(files) == 0:
-        print('No new files available for download.')
+        logger.info('No new files available for download.')
         return
 
-    print('Downloaded...')
-    for filename in files:
-        print(filename)
-    print('Uploading...')
+    logger.info('Downloaded... ' + ', '.join(files))
+    logger.info('Uploading...')
     upload_transactions_from_files(files)
-    print('Upload complete.')
+    logger.info('Upload complete.')
