@@ -1,7 +1,6 @@
 from urllib.parse import urljoin
 
 from oauthlib.oauth2 import LegacyApplicationClient
-from requests.exceptions import HTTPError
 from requests_oauthlib import OAuth2Session
 import slumber
 
