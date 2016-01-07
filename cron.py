@@ -14,7 +14,8 @@ if __name__ == '__main__':
         'disable_existing_loggers': True,
         'formatters': {
             'simple': {
-                'format': '[%(levelname)s] %(message)s'
+                'format': '%(asctime)s [%(levelname)s] %(message)s',
+                'datefmt': '%Y-%m-%dT%H:%M:%S',
             },
         },
         'handlers': {
