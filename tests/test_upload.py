@@ -1,6 +1,8 @@
 from datetime import datetime
 from unittest import mock, TestCase
 
+from bankline_parser.data_services import parse
+
 from mtp_transaction_uploader import upload
 
 
@@ -328,3 +330,67 @@ class RetrieveNewFilesTestCase(TestCase):
 
         self.assertEqual([], new_filenames)
         self.assertEqual(None, new_last_date)
+
+
+class TransactionsFromFileTestCase(TestCase):
+
+    def test_get_transactions(self):
+        with open('tests/data/testfile_1') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        self.assertEqual(len(transactions), 3)
+
+        # transaction 0 - debit
+        self.assertEqual(transactions[0]['category'], 'debit')
+        self.assertEqual(transactions[0]['amount'], 288615)
+        self.assertEqual(transactions[0]['received_at'], '2004-02-05T00:00:00')
+
+        self.assertEqual(transactions[0]['reference'], 'Payment refund    ')
+        self.assertEqual(transactions[0].get('prisoner_number'), None)
+        self.assertEqual(transactions[0].get('prisoner_dob'), None)
+
+        # transaction 1 - credit
+        self.assertEqual(transactions[1]['category'], 'credit')
+        self.assertEqual(transactions[1]['amount'], 8939)
+        self.assertEqual(transactions[1]['received_at'], '2004-02-05T00:00:00')
+        self.assertEqual(transactions[1]['sender_account_number'], '29696666')
+        self.assertEqual(transactions[1]['sender_sort_code'], '608006')
+
+        self.assertEqual(transactions[1]['prisoner_number'], 'A1234BY')
+        self.assertEqual(transactions[1]['prisoner_dob'], datetime(1986, 12, 9, 0, 0))
+
+        # transaction 2 - credit
+        self.assertEqual(transactions[2]['category'], 'credit')
+        self.assertEqual(transactions[2]['amount'], 9802)
+        self.assertEqual(transactions[2]['received_at'], '2004-02-05T00:00:00')
+        self.assertEqual(transactions[2]['sender_account_number'], '78990056')
+        self.assertEqual(transactions[2]['sender_sort_code'], '245432')
+
+        self.assertEqual(transactions[2]['prisoner_number'], 'B4321XZ')
+        self.assertEqual(transactions[2]['prisoner_dob'], datetime(1992, 11, 8, 0, 0))
+
+    @mock.patch('mtp_transaction_uploader.upload.logger')
+    def test_get_transactions_no_records(self, mock_logger):
+        with open('tests/data/testfile_no_records') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+        mock_logger.info.assert_called_with('No records found.')
+
+        self.assertEqual(transactions, None)
+
+    @mock.patch('mtp_transaction_uploader.upload.logger')
+    def test_get_transactions_incorrect_totals(self, mock_logger):
+        with open('tests/data/testfile_incorrect_totals') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+        mock_logger.error.assert_called_with(
+            "Errors: {'account 0': ['Monetary total of debit items does not "
+            "match expected: counted 288615, expected 288610', "
+            "'Monetary total of credit items does not match expected: "
+            "counted 18741, expected 18732']}")
+
+        self.assertEqual(transactions, None)

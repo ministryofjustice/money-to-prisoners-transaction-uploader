@@ -107,7 +107,9 @@ def upload_transactions_from_files(files):
     conn = get_authenticated_connection()
     for filename in files:
         logger.info('Processing %s...' % filename)
-        transactions = get_transactions_from_file(filename)
+        with open(filename) as f:
+            data_services_file = parse(f)
+        transactions = get_transactions_from_file(data_services_file)
         if transactions:
             try:
                 conn.bank_admin.transactions.post(clean_request_data(transactions))
@@ -127,17 +129,14 @@ def clean_request_data(data):
     return cleaned_data
 
 
-def get_transactions_from_file(filename):
-    with open(filename) as f:
-        data_services_file = parse(f)
-
+def get_transactions_from_file(data_services_file):
     if not data_services_file.is_valid():
-        logger.error('%s invalid: %s' % (filename, data_services_file.errors))
+        logger.error('Errors: %s' % data_services_file.errors)
         return None
 
     if not data_services_file.accounts or \
             not data_services_file.accounts[0].records:
-        logger.info('...no records found.')
+        logger.info('No records found.')
         return None
 
     transactions = []
@@ -158,7 +157,7 @@ def get_transactions_from_file(filename):
             if parsed_ref:
                 number, dob = parsed_ref
                 transaction['prisoner_number'] = number
-                transaction['prisoner_dob'] = parsed_ref
+                transaction['prisoner_dob'] = dob
             transactions.append(transaction)
 
         elif record.transaction_code == TransactionCode.debit_sundry_debit:
