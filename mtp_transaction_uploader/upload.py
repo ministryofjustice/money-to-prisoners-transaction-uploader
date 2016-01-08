@@ -158,7 +158,7 @@ def get_transactions_from_file(filename):
             if parsed_ref:
                 number, dob = parsed_ref
                 transaction['prisoner_number'] = number
-                transaction['prisoner_dob'] = parsed_ref
+                transaction['prisoner_dob'] = dob
             transactions.append(transaction)
 
         elif record.transaction_code == TransactionCode.debit_sundry_debit:
