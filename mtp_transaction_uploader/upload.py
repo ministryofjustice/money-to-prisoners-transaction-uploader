@@ -141,6 +141,7 @@ def get_transactions_from_file(data_services_file):
 
     transactions = []
     for record in data_services_file.accounts[0].records:
+        # payment credits
         if (record.transaction_code == TransactionCode.credit_bacs_credit or
                 record.transaction_code == TransactionCode.credit_sundry_credit):
             transaction = {
@@ -159,8 +160,20 @@ def get_transactions_from_file(data_services_file):
                 transaction['prisoner_number'] = number
                 transaction['prisoner_dob'] = dob
             transactions.append(transaction)
-
-        elif record.transaction_code == TransactionCode.debit_sundry_debit:
+        # other credits (e.g. bacs returned)
+        elif record.is_credit() and not record.is_total():
+            transaction = {
+                'amount': record.amount,
+                'category': 'non-payment-credit',
+                'sender_sort_code': record.originators_sort_code,
+                'sender_account_number': record.originators_account_number,
+                'sender_name': record.transaction_description,
+                'reference': record.reference_number,
+                'received_at': record.date.isoformat()
+            }
+            transactions.append(transaction)
+        # all debits
+        elif record.is_debit() and not record.is_total():
             transaction = {
                 'amount': record.amount,
                 'category': 'debit',
