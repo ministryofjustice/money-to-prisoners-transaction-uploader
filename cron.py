@@ -26,8 +26,15 @@ if __name__ == '__main__':
             },
         },
         'root': {
-            'level': 'INFO',
+            'level': 'WARNING',
             'handlers': ['console'],
+        },
+        'loggers': {
+            'mtp': {
+                'level': 'INFO',
+                'handlers': ['console'],
+                'propagate': False,
+            },
         },
     }
     sentry = None
@@ -44,8 +51,9 @@ if __name__ == '__main__':
             'client': sentry,
         }
         logging_conf['root']['handlers'].append('sentry')
+        logging_conf['loggers']['mtp']['handlers'].append('sentry')
     logging.config.dictConfig(logging_conf)
-    logger = logging.getLogger()
+    logger = logging.getLogger('mtp')
 
     # ensure all required parameters are set
     re_env_name = re.compile(r'^[A-Z_]+$')

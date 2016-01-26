@@ -13,7 +13,7 @@ from slumber.exceptions import SlumberHttpBaseException
 from . import settings
 from .api_client import get_authenticated_connection
 
-logger = logging.getLogger()
+logger = logging.getLogger('mtp')
 
 DATE_FORMAT = '%d%m%y'
 SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
