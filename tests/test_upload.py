@@ -344,6 +344,7 @@ class TransactionsFromFileTestCase(TestCase):
 
         # transaction 0 - debit
         self.assertEqual(transactions[0]['category'], 'debit')
+        self.assertEqual(transactions[0]['source'], 'administrative')
         self.assertEqual(transactions[0]['amount'], 288615)
         self.assertEqual(transactions[0]['received_at'], '2004-02-05T00:00:00')
 
@@ -353,6 +354,7 @@ class TransactionsFromFileTestCase(TestCase):
 
         # transaction 1 - credit
         self.assertEqual(transactions[1]['category'], 'credit')
+        self.assertEqual(transactions[1]['source'], 'bank_transfer')
         self.assertEqual(transactions[1]['amount'], 8939)
         self.assertEqual(transactions[1]['received_at'], '2004-02-05T00:00:00')
         self.assertEqual(transactions[1]['sender_account_number'], '29696666')
@@ -363,6 +365,7 @@ class TransactionsFromFileTestCase(TestCase):
 
         # transaction 2 - credit
         self.assertEqual(transactions[2]['category'], 'credit')
+        self.assertEqual(transactions[2]['source'], 'bank_transfer')
         self.assertEqual(transactions[2]['amount'], 9802)
         self.assertEqual(transactions[2]['received_at'], '2004-02-05T00:00:00')
         self.assertEqual(transactions[2]['sender_account_number'], '78990056')

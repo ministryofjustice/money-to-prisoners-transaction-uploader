@@ -147,6 +147,7 @@ def get_transactions_from_file(data_services_file):
             transaction = {
                 'amount': record.amount,
                 'category': 'credit',
+                'source': 'bank_transfer',
                 'sender_sort_code': record.originators_sort_code,
                 'sender_account_number': record.originators_account_number,
                 'sender_name': record.transaction_description,
@@ -164,7 +165,8 @@ def get_transactions_from_file(data_services_file):
         elif record.is_credit() and not record.is_total():
             transaction = {
                 'amount': record.amount,
-                'category': 'non-payment-credit',
+                'category': 'credit',
+                'source': 'administrative',
                 'sender_sort_code': record.originators_sort_code,
                 'sender_account_number': record.originators_account_number,
                 'sender_name': record.transaction_description,
@@ -177,6 +179,7 @@ def get_transactions_from_file(data_services_file):
             transaction = {
                 'amount': record.amount,
                 'category': 'debit',
+                'source': 'administrative',
                 'sender_sort_code': record.originators_sort_code,
                 'sender_account_number': record.originators_account_number,
                 'sender_name': record.transaction_description,
