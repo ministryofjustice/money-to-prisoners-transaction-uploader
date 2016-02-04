@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from unittest import mock, TestCase
 
 from bankline_parser.data_services import parse
@@ -15,37 +15,37 @@ class CreditReferenceParsingTestCase(TestCase):
 
     def test_correct_format_parses(self):
         self._test_successful_parse(
-            'A1234GY 09/12/86', 'A1234GY', datetime(1986, 12, 9)
+            'A1234GY 09/12/86', 'A1234GY', date(1986, 12, 9)
         )
 
     def test_no_space_parses(self):
         self._test_successful_parse(
-            'A1234GY09/12/86', 'A1234GY', datetime(1986, 12, 9)
+            'A1234GY09/12/86', 'A1234GY', date(1986, 12, 9)
         )
 
     def test_arbitrary_divider_parses(self):
         self._test_successful_parse(
-            'A1234GY:::09/12/1986', 'A1234GY', datetime(1986, 12, 9)
+            'A1234GY:::09/12/1986', 'A1234GY', date(1986, 12, 9)
         )
 
     def test_hyphenated_date_parses(self):
         self._test_successful_parse(
-            'A1234GY 09-12-86', 'A1234GY', datetime(1986, 12, 9)
+            'A1234GY 09-12-86', 'A1234GY', date(1986, 12, 9)
         )
 
     def test_non_separated_date_parses(self):
         self._test_successful_parse(
-            'A1234GY 091286', 'A1234GY', datetime(1986, 12, 9)
+            'A1234GY 091286', 'A1234GY', date(1986, 12, 9)
         )
 
     def test_non_zero_padded_date_parses(self):
         self._test_successful_parse(
-            'A1234GY 9/6/86', 'A1234GY', datetime(1986, 6, 9)
+            'A1234GY 9/6/86', 'A1234GY', date(1986, 6, 9)
         )
 
     def test_four_digit_year_parses(self):
         self._test_successful_parse(
-            'A1234GY 09/12/1986', 'A1234GY', datetime(1986, 12, 9)
+            'A1234GY 09/12/1986', 'A1234GY', date(1986, 12, 9)
         )
 
     def test_invalid_prisoner_number_does_not_parse(self):
@@ -59,13 +59,13 @@ class FilenameParsingTestCase(TestCase):
 
     def test_correct_format_returns_correct_date(self):
         filename = 'Y01A.CARS.#D.444444.D091214'
-        expected_date = datetime(2014, 12, 9).date()
+        expected_date = date(2014, 12, 9)
         parsed_datetime = upload.parse_filename(filename, '444444')
         self.assertEqual(expected_date, parsed_datetime.date())
 
     def test_correct_format_returns_correct_date_pre_2000(self):
         filename = 'Y01A.CARS.#D.444444.D091299'
-        expected_date = datetime(1999, 12, 9).date()
+        expected_date = date(1999, 12, 9)
         parsed_datetime = upload.parse_filename(filename, '444444')
         self.assertEqual(expected_date, parsed_datetime.date())
 
@@ -106,12 +106,12 @@ class FileDownloadTestCase(TestCase):
         new_dates, new_filenames = upload.download_new_files(None)
 
         self.assertEqual([
-            datetime(2014, 12, 9).date(),
-            datetime(2014, 12, 10).date(),
-            datetime(2014, 12, 11).date(),
-            datetime(2014, 12, 12).date(),
-            datetime(2014, 12, 13).date(),
-            datetime(2014, 12, 14).date(),
+            date(2014, 12, 9),
+            date(2014, 12, 10),
+            date(2014, 12, 11),
+            date(2014, 12, 12),
+            date(2014, 12, 13),
+            date(2014, 12, 14),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D091214',
@@ -148,11 +148,11 @@ class FileDownloadTestCase(TestCase):
         new_dates, new_filenames = upload.download_new_files(None)
 
         self.assertEqual([
-            datetime(2014, 12, 9).date(),
-            datetime(2014, 12, 10).date(),
-            datetime(2014, 12, 11).date(),
-            datetime(2014, 12, 12).date(),
-            datetime(2014, 12, 14).date(),
+            date(2014, 12, 9),
+            date(2014, 12, 10),
+            date(2014, 12, 11),
+            date(2014, 12, 12),
+            date(2014, 12, 14),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D091214',
@@ -188,9 +188,9 @@ class FileDownloadTestCase(TestCase):
         new_dates, new_filenames = upload.download_new_files(datetime(2014, 12, 11))
 
         self.assertEqual([
-            datetime(2014, 12, 12).date(),
-            datetime(2014, 12, 13).date(),
-            datetime(2014, 12, 14).date(),
+            date(2014, 12, 12),
+            date(2014, 12, 13),
+            date(2014, 12, 14),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D121214',
@@ -231,11 +231,11 @@ class FileDownloadTestCase(TestCase):
         new_dates, new_filenames = upload.download_new_files(None)
 
         self.assertEqual([
-            datetime(2014, 12, 9).date(),
-            datetime(2014, 12, 10).date(),
-            datetime(2014, 12, 11).date(),
-            datetime(2014, 12, 12).date(),
-            datetime(2014, 12, 14).date(),
+            date(2014, 12, 9),
+            date(2014, 12, 10),
+            date(2014, 12, 11),
+            date(2014, 12, 12),
+            date(2014, 12, 14),
         ], [dt.date() for dt in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D091214',
@@ -293,7 +293,7 @@ class RetrieveNewFilesTestCase(TestCase):
             '/Y01A.CARS.#D.444444.D131214',
             '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
-        self.assertEqual(datetime(2014, 12, 14).date(), new_last_date.date())
+        self.assertEqual(date(2014, 12, 14), new_last_date.date())
 
     @mock.patch('mtp_transaction_uploader.upload.Connection')
     @mock.patch('mtp_transaction_uploader.upload.settings')
@@ -361,7 +361,7 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[1]['sender_sort_code'], '608006')
 
         self.assertEqual(transactions[1]['prisoner_number'], 'A1234BY')
-        self.assertEqual(transactions[1]['prisoner_dob'], datetime(1986, 12, 9, 0, 0))
+        self.assertEqual(transactions[1]['prisoner_dob'], '1986-12-09')
 
         # transaction 2 - credit
         self.assertEqual(transactions[2]['category'], 'credit')
@@ -372,7 +372,7 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[2]['sender_sort_code'], '245432')
 
         self.assertEqual(transactions[2]['prisoner_number'], 'B4321XZ')
-        self.assertEqual(transactions[2]['prisoner_dob'], datetime(1992, 11, 8, 0, 0))
+        self.assertEqual(transactions[2]['prisoner_dob'], '1992-11-08')
 
     def test_populates_roll_numbers_when_relevant_sort_codes_found(self):
         with open('tests/data/testfile_roll_number') as f:

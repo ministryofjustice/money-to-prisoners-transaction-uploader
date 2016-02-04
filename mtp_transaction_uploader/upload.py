@@ -96,7 +96,7 @@ def upload_transactions_from_files(files):
                 conn.bank_admin.transactions.post(clean_request_data(transactions))
                 logger.info('...done.')
             except SlumberHttpBaseException as e:
-                logger.error('...failed.\n' + getattr(e, 'content', ''))
+                logger.error('...failed.\n' + str(getattr(e, 'content', '')))
 
 
 def clean_request_data(data):
@@ -144,7 +144,7 @@ def get_transactions_from_file(data_services_file):
             if parsed_ref:
                 number, dob = parsed_ref
                 transaction['prisoner_number'] = number
-                transaction['prisoner_dob'] = dob
+                transaction['prisoner_dob'] = dob.isoformat()
         # other credits (e.g. bacs returned)
         elif record.is_credit():
             transaction['category'] = 'credit'
@@ -175,7 +175,7 @@ def parse_credit_reference(ref):
 
             ParsedReference = namedtuple('ParsedReference',
                                          ['prisoner_number', 'prisoner_dob'])
-            return ParsedReference(m.group(1), dob)
+            return ParsedReference(m.group(1), dob.date())
 
 
 def get_roll_number(record):
