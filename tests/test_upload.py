@@ -374,6 +374,52 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[2]['prisoner_number'], 'B4321XZ')
         self.assertEqual(transactions[2]['prisoner_dob'], datetime(1992, 11, 8, 0, 0))
 
+    def test_populates_roll_numbers_when_relevant_sort_codes_found(self):
+        with open('tests/data/testfile_roll_number') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        self.assertEqual(len(transactions), 6)
+
+        self.assertEqual(transactions[0]['category'], 'credit')
+        self.assertEqual(transactions[0]['sender_roll_number'], '123A 123456A')
+
+        self.assertEqual(transactions[1]['category'], 'credit')
+        self.assertEqual(transactions[1]['sender_roll_number'], 'A12345678SMI')
+
+        self.assertEqual(transactions[2]['category'], 'credit')
+        self.assertEqual(transactions[2]['sender_roll_number'], '1234/12345678')
+
+        self.assertEqual(transactions[3]['category'], 'credit')
+        self.assertEqual(transactions[3]['sender_roll_number'], '12-123456-12345')
+
+        self.assertEqual(transactions[4]['category'], 'credit')
+        self.assertEqual(transactions[4]['sender_roll_number'], '1234567890')
+
+        self.assertEqual(transactions[5]['category'], 'debit')
+        self.assertEqual(transactions[5]['sender_roll_number'], '1234567890')
+
+    def test_does_not_populate_roll_number_typically(self):
+        with open('tests/data/testfile_1') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        self.assertEqual(len(transactions), 3)
+
+        self.assertEqual(transactions[0]['sender_roll_number'], None)
+        self.assertEqual(transactions[1]['sender_roll_number'], None)
+        self.assertEqual(transactions[2]['sender_roll_number'], None)
+
+    def test_does_not_populate_roll_number_if_not_matching_format(self):
+        with open('tests/data/testfile_bs_sort_code_invalid_roll_number') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+        self.assertEqual(len(transactions), 1)
+        self.assertEqual(transactions[0]['sender_roll_number'], None)
+
     @mock.patch('mtp_transaction_uploader.upload.logger')
     def test_get_transactions_no_records(self, mock_logger):
         with open('tests/data/testfile_no_records') as f:

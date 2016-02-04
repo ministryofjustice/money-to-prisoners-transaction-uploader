@@ -12,31 +12,12 @@ from slumber.exceptions import SlumberHttpBaseException
 
 from . import settings
 from .api_client import get_authenticated_connection
+from .patterns import CREDIT_REF_PATTERN, FILE_PATTERN_STR, ROLL_NUMBER_PATTERNS
 
 logger = logging.getLogger('mtp')
 
 DATE_FORMAT = '%d%m%y'
 SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
-
-credit_ref_pattern = re.compile(
-    '''
-    ([A-Za-z][0-9]{4}[A-Za-z]{2}) # match the prisoner number
-    .*?                           # skip until next digit
-    ([0-9]{1,2})                  # match 1 or 2 digit day of month
-    .*?                           # skip until next digit
-    ([0-9]{1,2})                  # match 1 or 2 digit month
-    .*?                           # skip until next digit
-    ([0-9]{2,4})                  # match 2 or 4 digit year
-    ''',
-    re.X
-)
-file_pattern_str = (
-    '''
-    Y01A\.CARS\.\#D\.             # static file format
-    %(code)s\.                    # our unique account code
-    D(?P<date>[0-9]{6})           # date that file was generated (ddmmyy)
-    '''
-)
 
 
 def download_new_files(last_date):
@@ -69,7 +50,7 @@ def download_new_files(last_date):
 
 def parse_filename(filename, account_code):
     file_pattern = re.compile(
-        file_pattern_str % {'code': account_code}, re.X
+        FILE_PATTERN_STR % {'code': account_code}, re.X
     )
     m = file_pattern.match(filename)
     if m:
@@ -141,59 +122,46 @@ def get_transactions_from_file(data_services_file):
 
     transactions = []
     for record in data_services_file.accounts[0].records:
+        if record.is_total() or record.is_balance():
+            continue
+
+        transaction = {
+            'amount': record.amount,
+            'sender_sort_code': record.originators_sort_code,
+            'sender_account_number': record.originators_account_number,
+            'sender_name': record.transaction_description,
+            'sender_roll_number': get_roll_number(record),
+            'reference': record.reference_number,
+            'received_at': record.date.isoformat()
+        }
         # payment credits
         if (record.transaction_code == TransactionCode.credit_bacs_credit or
                 record.transaction_code == TransactionCode.credit_sundry_credit):
-            transaction = {
-                'amount': record.amount,
-                'category': 'credit',
-                'source': 'bank_transfer',
-                'sender_sort_code': record.originators_sort_code,
-                'sender_account_number': record.originators_account_number,
-                'sender_name': record.transaction_description,
-                'reference': record.reference_number,
-                'received_at': record.date.isoformat()
-            }
+            transaction['category'] = 'credit'
+            transaction['source'] = 'bank_transfer'
 
             parsed_ref = parse_credit_reference(record.reference_number)
             if parsed_ref:
                 number, dob = parsed_ref
                 transaction['prisoner_number'] = number
                 transaction['prisoner_dob'] = dob
-            transactions.append(transaction)
         # other credits (e.g. bacs returned)
-        elif record.is_credit() and not record.is_total():
-            transaction = {
-                'amount': record.amount,
-                'category': 'credit',
-                'source': 'administrative',
-                'sender_sort_code': record.originators_sort_code,
-                'sender_account_number': record.originators_account_number,
-                'sender_name': record.transaction_description,
-                'reference': record.reference_number,
-                'received_at': record.date.isoformat()
-            }
-            transactions.append(transaction)
+        elif record.is_credit():
+            transaction['category'] = 'credit'
+            transaction['source'] = 'administrative'
         # all debits
-        elif record.is_debit() and not record.is_total():
-            transaction = {
-                'amount': record.amount,
-                'category': 'debit',
-                'source': 'administrative',
-                'sender_sort_code': record.originators_sort_code,
-                'sender_account_number': record.originators_account_number,
-                'sender_name': record.transaction_description,
-                'reference': record.reference_number,
-                'received_at': record.date.isoformat(),
-            }
-            transactions.append(transaction)
+        elif record.is_debit():
+            transaction['category'] = 'debit'
+            transaction['source'] = 'administrative'
+
+        transactions.append(transaction)
 
     return transactions
 
 
 def parse_credit_reference(ref):
     if ref:
-        m = credit_ref_pattern.match(ref)
+        m = CREDIT_REF_PATTERN.match(ref)
         if m:
             date_str = '%s/%s/%s' % (m.group(2), m.group(3), m.group(4))
             try:
@@ -208,6 +176,26 @@ def parse_credit_reference(ref):
             ParsedReference = namedtuple('ParsedReference',
                                          ['prisoner_number', 'prisoner_dob'])
             return ParsedReference(m.group(1), dob)
+
+
+def get_roll_number(record):
+    if record.is_debit():
+        candidate_roll_number = record.reference_number
+    else:
+        candidate_roll_number = record.transaction_description
+
+    if record.originators_sort_code in ROLL_NUMBER_PATTERNS:
+        pattern = None
+        patterns = ROLL_NUMBER_PATTERNS[record.originators_sort_code]
+        if isinstance(patterns, dict):
+            pattern = patterns.get(record.originators_account_number)
+        else:
+            pattern = patterns
+
+        if pattern and candidate_roll_number:
+            m = pattern.match(candidate_roll_number)
+            if m:
+                return candidate_roll_number.strip()
 
 
 def main():
