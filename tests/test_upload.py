@@ -380,7 +380,7 @@ class TransactionsFromFileTestCase(TestCase):
 
         transactions = upload.get_transactions_from_file(data_services_file)
 
-        self.assertEqual(len(transactions), 6)
+        self.assertEqual(len(transactions), 7)
 
         self.assertEqual(transactions[0]['category'], 'credit')
         self.assertEqual(transactions[0]['sender_roll_number'], '123A 123456A')
@@ -399,6 +399,9 @@ class TransactionsFromFileTestCase(TestCase):
 
         self.assertEqual(transactions[5]['category'], 'debit')
         self.assertEqual(transactions[5]['sender_roll_number'], '1234567890')
+
+        self.assertEqual(transactions[6]['category'], 'credit')
+        self.assertEqual(transactions[6]['sender_roll_number'], 'A12345678')
 
     def test_does_not_populate_roll_number_typically(self):
         with open('tests/data/testfile_1') as f:
