@@ -423,6 +423,27 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(len(transactions), 1)
         self.assertEqual(transactions[0]['sender_roll_number'], None)
 
+    def test_marks_incomplete_sender_information(self):
+        with open('tests/data/testfile_sender_information') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        self.assertEqual(len(transactions), 4)
+
+        # check that account number is 0s instead of None for matching building society
+        self.assertEqual(transactions[0]['category'], 'credit')
+        self.assertEqual(transactions[0]['sender_account_number'], '00000000')
+
+        self.assertEqual(transactions[1]['sender_sort_code'], None)
+        self.assertTrue(transactions[1]['incomplete_sender_info'])
+
+        self.assertEqual(transactions[2]['sender_account_number'], None)
+        self.assertTrue(transactions[2]['incomplete_sender_info'])
+
+        self.assertEqual(transactions[3]['sender_roll_number'], None)
+        self.assertTrue(transactions[3]['incomplete_sender_info'])
+
     @mock.patch('mtp_transaction_uploader.upload.logger')
     def test_get_transactions_no_records(self, mock_logger):
         with open('tests/data/testfile_no_records') as f:
