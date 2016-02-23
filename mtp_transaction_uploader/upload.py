@@ -125,12 +125,14 @@ def get_transactions_from_file(data_services_file):
         if record.is_total() or record.is_balance():
             continue
 
+        sender_information = extract_sender_information(record)
         transaction = {
             'amount': record.amount,
-            'sender_sort_code': record.originators_sort_code,
-            'sender_account_number': record.originators_account_number,
+            'sender_sort_code': sender_information.sort_code,
+            'sender_account_number': sender_information.account_number,
+            'sender_roll_number': sender_information.roll_number,
+            'incomplete_sender_info': sender_information.incomplete,
             'sender_name': record.transaction_description,
-            'sender_roll_number': get_roll_number(record),
             'reference': record.reference_number,
             'received_at': record.date.isoformat()
         }
@@ -178,7 +180,12 @@ def parse_credit_reference(ref):
             return ParsedReference(m.group(1), dob.date())
 
 
-def get_roll_number(record):
+def extract_sender_information(record):
+    sort_code = record.originators_sort_code
+    account_number = record.originators_account_number
+    roll_number = None
+    roll_number_expected = False
+
     if record.is_debit():
         candidate_roll_number = record.reference_number
     else:
@@ -192,10 +199,27 @@ def get_roll_number(record):
         else:
             pattern = patterns
 
-        if pattern and candidate_roll_number:
-            m = pattern.match(candidate_roll_number)
-            if m:
-                return candidate_roll_number.strip()
+        if pattern:
+            roll_number_expected = True
+            if account_number is None:
+                # 0 filled normally means absent, but some building societies
+                # use it for roll number accounts
+                account_number = '0' * 8
+            if candidate_roll_number:
+                m = pattern.match(candidate_roll_number)
+                if m:
+                    roll_number = candidate_roll_number.strip()
+
+    SenderInformation = namedtuple(
+        'SenderInformation', [
+            'sort_code', 'account_number', 'roll_number', 'incomplete'
+        ]
+    )
+    return SenderInformation(
+        sort_code, account_number, roll_number,
+        sort_code is None or account_number is None or
+        (roll_number_expected and roll_number is None)
+    )
 
 
 def main():
