@@ -347,6 +347,7 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[0]['source'], 'administrative')
         self.assertEqual(transactions[0]['amount'], 288615)
         self.assertEqual(transactions[0]['received_at'], '2004-02-05T00:00:00')
+        self.assertEqual(transactions[0]['processor_type_code'], '03')
 
         self.assertEqual(transactions[0]['reference'], 'Payment refund    ')
         self.assertEqual(transactions[0].get('prisoner_number'), None)
@@ -359,6 +360,7 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[1]['received_at'], '2004-02-05T00:00:00')
         self.assertEqual(transactions[1]['sender_account_number'], '29696666')
         self.assertEqual(transactions[1]['sender_sort_code'], '608006')
+        self.assertEqual(transactions[1]['processor_type_code'], '99')
 
         self.assertEqual(transactions[1]['prisoner_number'], 'A1234BY')
         self.assertEqual(transactions[1]['prisoner_dob'], '1986-12-09')
@@ -370,6 +372,7 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[2]['received_at'], '2004-02-05T00:00:00')
         self.assertEqual(transactions[2]['sender_account_number'], '78990056')
         self.assertEqual(transactions[2]['sender_sort_code'], '245432')
+        self.assertEqual(transactions[2]['processor_type_code'], '93')
 
         self.assertEqual(transactions[2]['prisoner_number'], 'B4321XZ')
         self.assertEqual(transactions[2]['prisoner_dob'], '1992-11-08')
