@@ -134,7 +134,8 @@ def get_transactions_from_file(data_services_file):
             'incomplete_sender_info': sender_information.incomplete,
             'sender_name': record.transaction_description,
             'reference': record.reference_number,
-            'received_at': record.date.isoformat()
+            'received_at': record.date.isoformat(),
+            'processor_type_code': record.transaction_code.value
         }
         # payment credits
         if (record.transaction_code == TransactionCode.credit_bacs_credit or
