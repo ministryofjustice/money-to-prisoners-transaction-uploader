@@ -12,8 +12,11 @@ RUN apt-get update && \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 
 WORKDIR /app
+
+RUN pip3 install -U setuptools pip wheel
+
 ADD . /app
-RUN pip3 install -r requirements/prod.txt
+RUN pip3 install -r requirements/docker.txt
 
 RUN touch /var/log/transaction-uploader.stdout
 RUN touch /var/log/transaction-uploader.stderr
