@@ -170,11 +170,13 @@ def parse_credit_reference(ref):
             try:
                 dob = datetime.strptime(date_str, '%d/%m/%Y')
             except ValueError:
-                dob = datetime.strptime(date_str, '%d/%m/%y')
-
-                # set correct century for 2 digit year
-                if dob.year > datetime.today().year - 10:
-                    dob = dob.replace(year=dob.year - 100)
+                try:
+                    dob = datetime.strptime(date_str, '%d/%m/%y')
+                    # set correct century for 2 digit year
+                    if dob.year > datetime.today().year - 10:
+                        dob = dob.replace(year=dob.year - 100)
+                except ValueError:
+                    return
 
             ParsedReference = namedtuple('ParsedReference',
                                          ['prisoner_number', 'prisoner_dob'])
