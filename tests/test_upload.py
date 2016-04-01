@@ -18,6 +18,21 @@ class CreditReferenceParsingTestCase(TestCase):
             'A1234GY 09/12/86', 'A1234GY', date(1986, 12, 9)
         )
 
+    def test_trailing_whitespace_parses(self):
+        self._test_successful_parse(
+            'A1234GY 09/12/86        ', 'A1234GY', date(1986, 12, 9)
+        )
+
+    def test_leading_whitespace_parses(self):
+        self._test_successful_parse(
+            '      A1234GY 09/12/86', 'A1234GY', date(1986, 12, 9)
+        )
+
+    def test_trailing_non_digits_parses(self):
+        self._test_successful_parse(
+            'A1234GY 09/12/86.', 'A1234GY', date(1986, 12, 9)
+        )
+
     def test_no_space_parses(self):
         self._test_successful_parse(
             'A1234GY09/12/86', 'A1234GY', date(1986, 12, 9)
@@ -35,7 +50,12 @@ class CreditReferenceParsingTestCase(TestCase):
 
     def test_non_separated_date_parses(self):
         self._test_successful_parse(
-            'A1234GY 091286', 'A1234GY', date(1986, 12, 9)
+            'A1234GY091286', 'A1234GY', date(1986, 12, 9)
+        )
+
+    def test_space_separated_date_parses(self):
+        self._test_successful_parse(
+            'A1234GY 09 12 86', 'A1234GY', date(1986, 12, 9)
         )
 
     def test_non_zero_padded_date_parses(self):
@@ -48,11 +68,29 @@ class CreditReferenceParsingTestCase(TestCase):
             'A1234GY 09/12/1986', 'A1234GY', date(1986, 12, 9)
         )
 
-    def test_invalid_prisoner_number_does_not_parse(self):
+    def test_invalid_prisoner_number_does_not_parse_1(self):
         self.assertEqual(upload.parse_credit_reference('A1234Y 09/12/1986'), None)
 
-    def test_invalid_year_does_not_parse(self):
+    def test_invalid_prisoner_number_does_not_parse_2(self):
+        self.assertEqual(upload.parse_credit_reference('AA1234GY 09/12/1986'), None)
+
+    def test_one_digit_year_does_not_parse(self):
         self.assertEqual(upload.parse_credit_reference('A1234GY 1/1/1'), None)
+
+    def test_three_digit_year_does_not_parse(self):
+        self.assertEqual(upload.parse_credit_reference('A1234GY 09/12/198'), None)
+
+    def test_too_many_date_digits_does_not_parse(self):
+        self.assertEqual(upload.parse_credit_reference('A1234GY 0931231986'), None)
+
+    def test_trailing_digits_does_not_parse(self):
+        self.assertEqual(upload.parse_credit_reference('A1234GY 09/12/198600000'), None)
+
+    def test_impossible_day_does_not_parse(self):
+        self.assertEqual(upload.parse_credit_reference('A1234GY 32/12/1986'), None)
+
+    def test_impossible_month_does_not_parse(self):
+        self.assertEqual(upload.parse_credit_reference('A1234GY 09/13/1986'), None)
 
 
 class FilenameParsingTestCase(TestCase):
