@@ -45,7 +45,11 @@ def download_new_files(last_date):
                         conn.get(filename, localpath=local_path)
 
     NewFiles = namedtuple('NewFiles', ['new_dates', 'new_filenames'])
-    return NewFiles(new_dates, new_filenames)
+    if new_dates and new_filenames:
+        sorted_dates, sorted_files = zip(*sorted(zip(new_dates, new_filenames)))
+        return NewFiles(list(sorted_dates), list(sorted_files))
+    else:
+        return NewFiles([], [])
 
 
 def parse_filename(filename, account_code):
@@ -94,6 +98,7 @@ def upload_transactions_from_files(files):
         if transactions:
             try:
                 conn.bank_admin.transactions.post(clean_request_data(transactions))
+                update_new_balance(transactions, parse_filename(filename, settings.ACCOUNT_CODE))
                 logger.info('...done.')
             except SlumberHttpBaseException as e:
                 logger.error('...failed.\n' + str(getattr(e, 'content', '')))
@@ -223,6 +228,24 @@ def extract_sender_information(record):
         sort_code is None or account_number is None or
         (roll_number_expected and roll_number is None)
     )
+
+
+def update_new_balance(transactions, date):
+    conn = get_authenticated_connection()
+    response = conn.balances.get(limit=1, date__lt=date.isoformat())
+    if response.get('results'):
+        balance = response['results'][0]['closing_balance']
+    else:
+        balance = 0
+
+    for t in transactions:
+        if t['category'] == 'credit':
+            balance += t['amount']
+        elif t['category'] == 'debit':
+            balance -= t['amount']
+
+    conn.balances.post({'date': date.isoformat(),
+                        'closing_balance': balance})
 
 
 def main():

@@ -122,6 +122,18 @@ class FilenameParsingTestCase(TestCase):
 @mock.patch('mtp_transaction_uploader.upload.Connection')
 class FileDownloadTestCase(TestCase):
 
+    def _download_new_files(self, mock_connection_class, mock_settings, dirlist, last_date):
+        mock_connection = mock.MagicMock()
+        mock_connection_class().__enter__.return_value = mock_connection
+
+        mock_connection.listdir.return_value = dirlist
+        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
+
+        mock_settings.ACCOUNT_CODE = '444444'
+        mock_settings.DS_NEW_FILES_DIR = '/'
+
+        return upload.download_new_files(last_date)
+
     def test_download_new_files(self, mock_connection_class, mock_settings):
         dirlist = [
             'Y01A.CARS.#D.444444.D091214',
@@ -132,16 +144,9 @@ class FileDownloadTestCase(TestCase):
             'Y01A.CARS.#D.444444.D141214',
         ]
 
-        mock_connection = mock.MagicMock()
-        mock_connection_class().__enter__.return_value = mock_connection
-
-        mock_connection.listdir.return_value = dirlist
-        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
-
-        mock_settings.ACCOUNT_CODE = '444444'
-        mock_settings.DS_NEW_FILES_DIR = '/'
-
-        new_dates, new_filenames = upload.download_new_files(None)
+        new_dates, new_filenames = self._download_new_files(
+            mock_connection_class, mock_settings, dirlist, None
+        )
 
         self.assertEqual([
             date(2014, 12, 9),
@@ -160,6 +165,28 @@ class FileDownloadTestCase(TestCase):
             '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
 
+    def test_files_ordered_by_date(self, mock_connection_class, mock_settings):
+        dirlist = [
+            'Y01A.CARS.#D.444444.D111214',
+            'Y01A.CARS.#D.444444.D091214',
+            'Y01A.CARS.#D.444444.D101214',
+        ]
+
+        new_dates, new_filenames = self._download_new_files(
+            mock_connection_class, mock_settings, dirlist, None
+        )
+
+        self.assertEqual([
+            date(2014, 12, 9),
+            date(2014, 12, 10),
+            date(2014, 12, 11),
+        ], [dt.date() for dt in new_dates])
+        self.assertEqual([
+            '/Y01A.CARS.#D.444444.D091214',
+            '/Y01A.CARS.#D.444444.D101214',
+            '/Y01A.CARS.#D.444444.D111214',
+        ], new_filenames)
+
     def test_download_new_files_skips_other_accounts(
         self,
         mock_connection_class,
@@ -174,16 +201,9 @@ class FileDownloadTestCase(TestCase):
             'Y01A.CARS.#D.444444.D141214',
         ]
 
-        mock_connection = mock.MagicMock()
-        mock_connection_class().__enter__.return_value = mock_connection
-
-        mock_connection.listdir.return_value = dirlist
-        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
-
-        mock_settings.ACCOUNT_CODE = '444444'
-        mock_settings.DS_NEW_FILES_DIR = '/'
-
-        new_dates, new_filenames = upload.download_new_files(None)
+        new_dates, new_filenames = self._download_new_files(
+            mock_connection_class, mock_settings, dirlist, None
+        )
 
         self.assertEqual([
             date(2014, 12, 9),
@@ -214,16 +234,9 @@ class FileDownloadTestCase(TestCase):
             'Y01A.CARS.#D.444444.D141214',
         ]
 
-        mock_connection = mock.MagicMock()
-        mock_connection_class().__enter__.return_value = mock_connection
-
-        mock_connection.listdir.return_value = dirlist
-        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
-
-        mock_settings.ACCOUNT_CODE = '444444'
-        mock_settings.DS_NEW_FILES_DIR = '/'
-
-        new_dates, new_filenames = upload.download_new_files(datetime(2014, 12, 11))
+        new_dates, new_filenames = self._download_new_files(
+            mock_connection_class, mock_settings, dirlist, datetime(2014, 12, 11)
+        )
 
         self.assertEqual([
             date(2014, 12, 12),
@@ -508,3 +521,51 @@ class TransactionsFromFileTestCase(TestCase):
             "counted 18741, expected 18732']}")
 
         self.assertEqual(transactions, None)
+
+
+@mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
+class UpdateNewBalanceTestCase(TestCase):
+
+    def test_update_new_balance(self, mock_get_connection):
+        transactions = [
+            {'amount': 100, 'category': 'credit'},
+            {'amount': 120, 'category': 'debit'},
+            {'amount': 200, 'category': 'credit'},
+            {'amount': 150, 'category': 'credit'},
+        ]
+        stmt_date = date(2016, 3, 3)
+
+        conn = mock_get_connection()
+        conn.balances.get.return_value = {
+            'count': 1,
+            'results': [{'closing_balance': 1000}]
+        }
+
+        upload.update_new_balance(transactions, stmt_date)
+
+        conn.balances.post.assert_called_with({
+            'date': stmt_date.isoformat(),
+            'closing_balance': 1330,
+        })
+
+    def test_update_new_balance_with_no_previous_balance(self, mock_get_connection):
+        transactions = [
+            {'amount': 100, 'category': 'credit'},
+            {'amount': 120, 'category': 'debit'},
+            {'amount': 200, 'category': 'credit'},
+            {'amount': 150, 'category': 'credit'},
+        ]
+        stmt_date = date(2016, 3, 3)
+
+        conn = mock_get_connection()
+        conn.balances.get.return_value = {
+            'count': 0,
+            'results': []
+        }
+
+        upload.update_new_balance(transactions, stmt_date)
+
+        conn.balances.post.assert_called_with({
+            'date': stmt_date.isoformat(),
+            'closing_balance': 330,
+        })
