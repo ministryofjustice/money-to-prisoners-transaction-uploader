@@ -1,6 +1,6 @@
 # Place development dependencies here
 -r base.txt
-coverage==4.0.3
-flake8==2.5.1
-nose==1.3.7
-pep8-naming==0.3.3
+
+money-to-prisoners-utils[testing]==0.11
+
+nose>=1.3

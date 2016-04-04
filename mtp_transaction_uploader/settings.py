@@ -1,5 +1,7 @@
 import os
 
+ENVIRONMENT = os.environ.get('ENV', 'local')
+
 SFTP_HOST = os.environ.get('SFTP_HOST', '')
 SFTP_USER = os.environ.get('SFTP_USER', '')
 SFTP_PRIVATE_KEY = os.environ.get('SFTP_PRIVATE_KEY', '~/.ssh/id_rsa')
