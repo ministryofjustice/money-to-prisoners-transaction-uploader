@@ -117,6 +117,12 @@ class FilenameParsingTestCase(TestCase):
         parsed_datetime = upload.parse_filename(filename, '444444')
         self.assertEqual(None, parsed_datetime)
 
+    def test_parsing_date_from_full_path_succeeds(self):
+        filename = '/random/Y01A.CARS.#D.444444.D091214'
+        expected_date = date(2014, 12, 9)
+        parsed_datetime = upload.parse_filename(filename, '444444')
+        self.assertEqual(expected_date, parsed_datetime.date())
+
 
 @mock.patch('mtp_transaction_uploader.upload.settings')
 @mock.patch('mtp_transaction_uploader.upload.Connection')

@@ -56,7 +56,7 @@ def parse_filename(filename, account_code):
     file_pattern = re.compile(
         FILE_PATTERN_STR % {'code': account_code}, re.X
     )
-    m = file_pattern.match(filename)
+    m = file_pattern.search(filename)
     if m:
         return datetime.strptime(m.group('date'), DATE_FORMAT)
     return None
