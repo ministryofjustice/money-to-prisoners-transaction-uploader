@@ -98,7 +98,8 @@ def upload_transactions_from_files(files):
         if transactions:
             try:
                 conn.bank_admin.transactions.post(clean_request_data(transactions))
-                update_new_balance(transactions, parse_filename(filename, settings.ACCOUNT_CODE))
+                stmt_date = parse_filename(filename, settings.ACCOUNT_CODE).date()
+                update_new_balance(transactions, stmt_date)
                 logger.info('...done.')
             except SlumberHttpBaseException as e:
                 logger.error('...failed.\n' + str(getattr(e, 'content', '')))
