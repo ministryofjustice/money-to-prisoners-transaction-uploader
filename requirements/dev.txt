@@ -1,6 +1,6 @@
 # Place development dependencies here
 -r base.txt
 
-money-to-prisoners-utils[testing]==0.11
+money-to-prisoners-utils[testing]==0.12
 
 nose>=1.3

@@ -90,19 +90,27 @@ def retrieve_data_services_files():
 
 def upload_transactions_from_files(files):
     conn = get_authenticated_connection()
+    successful_transaction_count = 0
     for filename in files:
         logger.info('Processing %s...' % filename)
         with open(filename) as f:
             data_services_file = parse(f)
         transactions = get_transactions_from_file(data_services_file)
         if transactions:
+            transaction_count = len(transactions)
             try:
                 conn.bank_admin.transactions.post(clean_request_data(transactions))
                 stmt_date = parse_filename(filename, settings.ACCOUNT_CODE).date()
                 update_new_balance(transactions, stmt_date)
-                logger.info('...done.')
+                logger.info('Uploaded %d transactions from %s' % (transaction_count, filename))
+                successful_transaction_count += transaction_count
             except SlumberHttpBaseException as e:
-                logger.error('...failed.\n' + str(getattr(e, 'content', '')))
+                logger.error('Failed to upload %d transactions from %s.\n%s' % (
+                    transaction_count,
+                    filename,
+                    getattr(e, 'content', e)
+                ))
+    return successful_transaction_count
 
 
 def clean_request_data(data):
@@ -251,11 +259,26 @@ def update_new_balance(transactions, date):
 
 def main():
     last_date, files = retrieve_data_services_files()
-    if len(files) == 0:
-        logger.info('No new files available for download.')
+    file_count = len(files)
+    if file_count == 0:
+        logger.info('No new files available to upload', extra={
+            'elk_fields': {
+                '@fields.file_count': file_count
+            }
+        })
         return
 
-    logger.info('Downloaded... ' + ', '.join(files))
-    logger.info('Uploading...')
-    upload_transactions_from_files(files)
-    logger.info('Upload complete.')
+    logger.info('Uploading transactions from new files: ' + ', '.join(files), extra={
+        'elk_fields': {
+            '@fields.file_count': file_count
+        }
+    })
+    transaction_count = upload_transactions_from_files(files)
+    logger.info(
+        'Upload of %d transactions complete' % transaction_count,
+        extra={
+            'elk_fields': {
+                '@fields.transaction_count': transaction_count
+            }
+        }
+    )
