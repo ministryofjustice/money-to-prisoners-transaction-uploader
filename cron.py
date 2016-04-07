@@ -25,7 +25,7 @@ if __name__ == '__main__':
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
-                'formatter': 'simple' if settings.ENVIRONMENT == 'local' else 'elk',
+                'formatter': 'simple' if settings.ENV == 'local' else 'elk',
             },
         },
         'root': {
