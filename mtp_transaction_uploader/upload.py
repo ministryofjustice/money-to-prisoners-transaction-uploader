@@ -157,11 +157,12 @@ def get_transactions_from_file(data_services_file):
             transaction['category'] = 'credit'
             transaction['source'] = 'bank_transfer'
 
-            parsed_ref = parse_credit_reference(record.reference_number)
+            parsed_ref = extract_prisoner_details(record)
             if parsed_ref:
-                number, dob = parsed_ref
+                number, dob, from_description_field = parsed_ref
                 transaction['prisoner_number'] = number
                 transaction['prisoner_dob'] = dob.isoformat()
+                transaction['reference_in_sender_field'] = from_description_field
         # other credits (e.g. bacs returned)
         elif record.is_credit():
             transaction['category'] = 'credit'
@@ -174,6 +175,24 @@ def get_transactions_from_file(data_services_file):
         transactions.append(transaction)
 
     return transactions
+
+
+def extract_prisoner_details(record):
+    from_description_field = False
+    parsed_ref = parse_credit_reference(record.reference_number)
+    if parsed_ref is None:
+        parsed_ref = parse_credit_reference(record.transaction_description)
+        if parsed_ref:
+            from_description_field = True
+
+    if parsed_ref:
+        prisoner_number, prisoner_dob = parsed_ref
+
+        PrisonerDetails = namedtuple(
+            'PrisonerDetails',
+            ['prisoner_number', 'prisoner_dob', 'from_description_field']
+        )
+        return PrisonerDetails(prisoner_number, prisoner_dob, from_description_field)
 
 
 def parse_credit_reference(ref):
