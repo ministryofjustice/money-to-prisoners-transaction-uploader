@@ -3,6 +3,8 @@ import os
 # NB: only values listed here will be available as environment variables when the cron job runs
 # ensure that the environment and setting names match
 
+UPLOADER_DISABLED = os.environ.get('UPLOADER_DISABLED', '')
+
 ENV = os.environ.get('ENV', 'local')
 APP_GIT_COMMIT = os.environ.get('APP_GIT_COMMIT', '')
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
