@@ -2,6 +2,7 @@ from datetime import datetime, date
 from unittest import mock, TestCase
 
 from bankline_parser.data_services import parse
+from bankline_parser.data_services.models import DataRecord
 
 from mtp_transaction_uploader import upload
 
@@ -91,6 +92,40 @@ class CreditReferenceParsingTestCase(TestCase):
 
     def test_impossible_month_does_not_parse(self):
         self.assertEqual(upload.parse_credit_reference('A1234GY 09/13/1986'), None)
+
+
+class ExtractPrisonerDetailsTestCase(TestCase):
+
+    def _test_successful_extraction(self, record, prisoner_number,
+                                    prisoner_dob, from_description_field):
+        parsed_number, parsed_dob, parsed_field = upload.extract_prisoner_details(record)
+        self.assertEqual(parsed_number, prisoner_number)
+        self.assertEqual(parsed_dob, prisoner_dob)
+        self.assertEqual(parsed_field, from_description_field)
+
+    def test_extraction_from_reference_field(self):
+        record = DataRecord(
+            '1234566717531509960800629696666000000000008939NORTHERN DIY'
+            '   E  A1234BY 09/12/86                     04036          '
+            '                       '
+        )
+        self._test_successful_extraction(record, 'A1234BY', date(1986, 12, 9), False)
+
+    def test_extraction_from_description_field(self):
+        record = DataRecord(
+            '1234566717531509960800629696666000000000008939A1234BY 09/12/86'
+            '                                       04036                  '
+            '               '
+        )
+        self._test_successful_extraction(record, 'A1234BY', date(1986, 12, 9), True)
+
+    def test_failed_extraction(self):
+        record = DataRecord(
+            '1234566717531509960800629696666000000000008939XXXXXXX Z1212P86'
+            '                                       04036                  '
+            '               '
+        )
+        self.assertEqual(upload.extract_prisoner_details(record), None)
 
 
 class FilenameParsingTestCase(TestCase):
