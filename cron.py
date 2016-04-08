@@ -5,10 +5,13 @@ import re
 import sys
 
 from mtp_transaction_uploader import settings
-from mtp_transaction_uploader.upload import main
+from mtp_transaction_uploader.upload import main as transaction_uploader
 
-if __name__ == '__main__':
-    # setup logging and exception handling
+
+def setup_monitoring():
+    """
+    Setup logging and exception reporting
+    """
     logging_conf = {
         'version': 1,
         'disable_existing_loggers': True,
@@ -58,6 +61,16 @@ if __name__ == '__main__':
     logging.config.dictConfig(logging_conf)
     logger = logging.getLogger('mtp')
 
+    return logger, sentry
+
+
+def main():
+    logger, sentry = setup_monitoring()
+
+    if settings.UPLOADER_DISABLED:
+        logger.info('Transaction uploader is disabled')
+        sys.exit(0)
+
     # ensure all required parameters are set
     re_env_name = re.compile(r'^[A-Z_]+$')
     missing_params = []
@@ -73,10 +86,14 @@ if __name__ == '__main__':
 
     try:
         # run the transaction uploader
-        main()
+        transaction_uploader()
     except:
         if sentry:
             sentry.captureException()
         else:
             logger.exception('Unhandled error')
         sys.exit(2)
+
+
+if __name__ == '__main__':
+    main()
