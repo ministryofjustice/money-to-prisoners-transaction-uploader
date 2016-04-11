@@ -1,7 +1,6 @@
 import logging
 import logging.config
 import os
-import re
 import sys
 
 from mtp_transaction_uploader import settings
@@ -72,12 +71,12 @@ def main():
         sys.exit(0)
 
     # ensure all required parameters are set
-    re_env_name = re.compile(r'^[A-Z_]+$')
     missing_params = []
+    required_params = {'SFTP_HOST', 'SFTP_USER', 'SFTP_PRIVATE_KEY', 'ACCOUNT_CODE',
+                       'API_URL', 'API_CLIENT_ID', 'API_CLIENT_SECRET',
+                       'API_USERNAME', 'API_PASSWORD'}
     for param in dir(settings):
-        if not re_env_name.match(param):
-            continue
-        if not getattr(settings, param):
+        if param in required_params and not getattr(settings, param):
             missing_params.append(param)
     if missing_params:
         logger.error('Missing environment variables: ' +
