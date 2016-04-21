@@ -1,4 +1,4 @@
 # Place docker dependencies here
 -r base.txt
 
-money-to-prisoners-utils[monitoring]==0.12
+money-to-prisoners-common[monitoring]==3.0.2

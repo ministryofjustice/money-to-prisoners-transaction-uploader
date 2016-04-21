@@ -20,7 +20,7 @@ def setup_monitoring():
                 'datefmt': '%Y-%m-%dT%H:%M:%S',
             },
             'elk': {
-                '()': 'mtp_utils.logging.ELKFormatter'
+                '()': 'mtp_common.logging.ELKFormatter'
             }
         },
         'handlers': {
