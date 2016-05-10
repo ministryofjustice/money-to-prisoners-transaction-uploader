@@ -354,7 +354,7 @@ class RetrieveNewFilesTestCase(TestCase):
         mock_connection_class
     ):
         mock_os.path.exists.side_effect = [False]
-        mock_get_connection().bank_admin.transactions.get.return_value =\
+        mock_get_connection().transactions.get.return_value =\
             {'count': 1, 'results': [{'received_at': '2014-12-115T19:09:02Z'}]}
 
         dirlist = [
@@ -401,7 +401,7 @@ class RetrieveNewFilesTestCase(TestCase):
         mock_connection_class
     ):
         mock_os.path.exists.side_effect = [False]
-        mock_get_connection().bank_admin.transactions.get.return_value =\
+        mock_get_connection().transactions.get.return_value =\
             {'count': 1, 'results': [{'received_at': '2014-12-115T19:09:02Z'}]}
 
         dirlist = []

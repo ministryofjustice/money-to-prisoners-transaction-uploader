@@ -71,7 +71,7 @@ def retrieve_data_services_files():
     # check date of most recent transactions uploaded
     last_date = None
     conn = get_authenticated_connection()
-    response = conn.bank_admin.transactions.get(ordering='-received_at', limit=1)
+    response = conn.transactions.get(ordering='-received_at', limit=1)
     if response.get('results'):
         last_date = response['results'][0]['received_at'][:10]
         last_date = datetime.strptime(last_date, '%Y-%m-%d')
@@ -99,7 +99,7 @@ def upload_transactions_from_files(files):
         if transactions:
             transaction_count = len(transactions)
             try:
-                conn.bank_admin.transactions.post(clean_request_data(transactions))
+                conn.transactions.post(clean_request_data(transactions))
                 stmt_date = parse_filename(filename, settings.ACCOUNT_CODE).date()
                 update_new_balance(transactions, stmt_date)
                 logger.info('Uploaded %d transactions from %s' % (transaction_count, filename))
