@@ -3,18 +3,30 @@ import re
 CREDIT_REF_PATTERN = re.compile(
     '''
     ^
-    [^a-zA-Z]*                                 # skip until first letter
-    (?P<reference>[A-Za-z][0-9]{4}[A-Za-z]{2}) # match the prisoner number
-    \D*                                        # skip until next digit
-    (?P<day>[0-9]{1,2})                        # match 1 or 2 digit day of month
-    \D*                                        # skip until next digit
-    (?P<month>[0-9]{1,2})                      # match 1 or 2 digit month
-    \D*                                        # skip until next digit
-    (?P<year>[0-9]{4}|[0-9]{2})                # match 4 or 2 digit year
-    \D*                                        # skip until end
+    (
+        [^A-Z]*                                 # skip until first letter
+        (?P<reference_1>[A-Z][0-9]{4}[A-Z]{2})  # match the prisoner number
+        [^0-9]*                                 # skip until next digit
+        (?P<day_1>[0-9]{1,2})                   # match 1 or 2 digit day of month
+        [^0-9]*                                 # skip until next digit
+        (?P<month_1>[0-9]{1,2})                 # match 1 or 2 digit month
+        [^0-9]*                                 # skip until next digit
+        (?P<year_1>[0-9]{4}|[0-9]{2})           # match 4 or 2 digit year
+        [^0-9]*                                 # skip until end
+    |
+        [^0-9]*                                 # skip until first digit
+        (?P<day_2>[0-9]{1,2})                   # match 1 or 2 digit day of month
+        [^0-9]*                                 # skip until next digit
+        (?P<month_2>[0-9]{1,2})                 # match 1 or 2 digit month
+        [^0-9]*                                 # skip until next digit
+        (?P<year_2>[0-9]{4}|[0-9]{2})           # match 4 or 2 digit year
+        [^A-Z]*                                 # skip until next letter
+        (?P<reference_2>[A-Z][0-9]{4}[A-Z]{2})  # match the prisoner number
+        [^A-Z]*                                 # skip until end
+    )
     $
     ''',
-    re.X
+    re.X | re.I
 )
 FILE_PATTERN_STR = (
     '''

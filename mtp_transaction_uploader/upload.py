@@ -196,21 +196,29 @@ def extract_prisoner_details(record):
 def parse_credit_reference(ref):
     if not ref:
         return
-    m = CREDIT_REF_PATTERN.match(ref)
-    if m:
-        date_str = '%s/%s/%s' % (m.group('day'), m.group('month'), m.group('year'))
-        try:
-            dob = datetime.strptime(date_str, '%d/%m/%Y')
-        except ValueError:
-            try:
-                dob = datetime.strptime(date_str, '%d/%m/%y')
-                # set correct century for 2 digit year
-                if dob.year > datetime.today().year - 10:
-                    dob = dob.replace(year=dob.year - 100)
-            except ValueError:
-                return
+    matches = CREDIT_REF_PATTERN.match(ref)
+    if not matches:
+        return
 
-        return ParsedReference(m.group('reference'), dob.date())
+    reference, day, month, year = matches.group('reference_1'), \
+        matches.group('day_1'), matches.group('month_1'), matches.group('year_1')
+    if not reference:
+        reference, day, month, year = matches.group('reference_2'), \
+            matches.group('day_2'), matches.group('month_2'), matches.group('year_2')
+
+    date_str = '%s/%s/%s' % (day, month, year)
+    try:
+        dob = datetime.strptime(date_str, '%d/%m/%Y')
+    except ValueError:
+        try:
+            dob = datetime.strptime(date_str, '%d/%m/%y')
+            # set correct century for 2 digit year
+            if dob.year > datetime.today().year - 10:
+                dob = dob.replace(year=dob.year - 100)
+        except ValueError:
+            return
+
+    return ParsedReference(reference.upper(), dob.date())
 
 
 def extract_sender_information(record):

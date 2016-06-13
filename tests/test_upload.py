@@ -8,90 +8,86 @@ from mtp_transaction_uploader import upload
 
 
 class CreditReferenceParsingTestCase(TestCase):
+    successful = {
+        'correct_format_1': ('A1234GY 09/12/86', 'A1234GY', date(1986, 12, 9)),
+        'correct_format_2': ('A1214GY 10/06/80', 'A1214GY', date(1980, 6, 10)),
+        'lower_case': ('a1214gy 10/06/80', 'A1214GY', date(1980, 6, 10)),
+        'mixed_case': ('A1214gy 10/06/80', 'A1214GY', date(1980, 6, 10)),
+        'trailing_whitespace': ('A1234GY 09/12/86        ', 'A1234GY', date(1986, 12, 9)),
+        'leading_whitespace': ('      A1234GY 09/12/86', 'A1234GY', date(1986, 12, 9)),
+        'trailing_non_digits': ('A1234GY 09/12/86.', 'A1234GY', date(1986, 12, 9)),
+        'no_space': ('A1234GY09/12/86', 'A1234GY', date(1986, 12, 9)),
+        'arbitrary_divider': ('A1234GY:::09/12/1986', 'A1234GY', date(1986, 12, 9)),
+        'whitespace_divider': ('A1234GY    09/12/1986', 'A1234GY', date(1986, 12, 9)),
+        'hyphenated_date': ('A1234GY 09-12-86', 'A1234GY', date(1986, 12, 9)),
+        'non_separated_date': ('A1234GY091286', 'A1234GY', date(1986, 12, 9)),
+        'non_separated_long_date': ('A1234GY09121986', 'A1234GY', date(1986, 12, 9)),
+        'space_separated_date': ('A1234GY 09 12 86', 'A1234GY', date(1986, 12, 9)),
+        'non_zero_padded_date': ('A1234GY 9/6/86', 'A1234GY', date(1986, 6, 9)),
+        'four_digit_year': ('A1234GY 09/12/1986', 'A1234GY', date(1986, 12, 9)),
+        'reference_generator_format': ('A1234GY/09/12/1986', 'A1234GY', date(1986, 12, 9)),
 
-    def _test_successful_parse(self, reference, prisoner_number, prisoner_dob):
-        parsed_number, parsed_dob = upload.parse_credit_reference(reference)
-        self.assertEqual(parsed_number, prisoner_number)
-        self.assertEqual(parsed_dob, prisoner_dob)
+        'reversed_format_1': ('09/12/86 A1234GY', 'A1234GY', date(1986, 12, 9)),
+        'reversed_format_2': ('10/06/80 A1214GY', 'A1214GY', date(1980, 6, 10)),
+        'reversed_natural_date': ('1/6/1980 A1214GY', 'A1214GY', date(1980, 6, 1)),
+        'reversed_with_whitespace': ('  09/12/86 A1234GY  ', 'A1234GY', date(1986, 12, 9)),
+        'reversed_with_whitespace_long_year': ('  09/12/1986 A1234GY  ', 'A1234GY', date(1986, 12, 9)),
+        'reversed_with_separators': ('9/12/86/A1234GY', 'A1234GY', date(1986, 12, 9)),
+        'reversed_with_separators_long_year': ('9/12/1986/A1234GY', 'A1234GY', date(1986, 12, 9)),
+        'reversed_without_spaces': ('091286A1234GY', 'A1234GY', date(1986, 12, 9)),
+        'reversed_without_spaces_long_year': ('09121986A1234GY', 'A1234GY', date(1986, 12, 9)),
+    }
+    unsuccessful = {
+        'blank': '',
+        'null': None,
+        'invalid': 'JOHN HALLS',
+        'no_date': 'A1234GY',
+        'no_prisoner_number': '09/12/1986',
 
-    def test_correct_format_parses(self):
-        self._test_successful_parse(
-            'A1234GY 09/12/86', 'A1234GY', date(1986, 12, 9)
-        )
+        'truncated_prisoner_number': 'A1234Y 09/12/1986',
+        'long_prisoner_number': 'AA1234GY 09/12/1986',
+        'one_digit_year': 'A1234GY 1/1/1',
+        'three_digit_year': 'A1234GY 09/12/198',
+        'too_many_date_digits': 'A1234GY 0931231986',
+        'trailing_digits': 'A1234GY 09/12/198600000',
+        'impossible_day': 'A1234GY 32/12/1986',
+        'impossible_month': 'A1234GY 09/13/1986',
+        'invalid_leap_day': 'A1234GY 29/02/1981',
 
-    def test_trailing_whitespace_parses(self):
-        self._test_successful_parse(
-            'A1234GY 09/12/86        ', 'A1234GY', date(1986, 12, 9)
-        )
+        'reversed_trailing_letters': '29/02/1981 A1234GYA',
+        'reversed_invalid_leap_day': '29/02/1981 A1234GY',
+        'reversed_three_digit_year': '09/12/198 A1234GY',
+    }
 
-    def test_leading_whitespace_parses(self):
-        self._test_successful_parse(
-            '      A1234GY 09/12/86', 'A1234GY', date(1986, 12, 9)
-        )
+    @classmethod
+    def add_methods(cls):
+        for name, values in cls.successful.items():
+            cls.add_successful_method(name, *values)
+        for name, reference in cls.unsuccessful.items():
+            cls.add_unsuccessful_method(name, reference)
 
-    def test_trailing_non_digits_parses(self):
-        self._test_successful_parse(
-            'A1234GY 09/12/86.', 'A1234GY', date(1986, 12, 9)
-        )
+    @classmethod
+    def add_successful_method(cls, name, reference, prisoner_number, prisoner_dob):
+        def method(self):
+            parsed_number, parsed_dob = upload.parse_credit_reference(reference)
+            self.assertEqual(parsed_number, prisoner_number)
+            self.assertEqual(parsed_dob, prisoner_dob)
 
-    def test_no_space_parses(self):
-        self._test_successful_parse(
-            'A1234GY09/12/86', 'A1234GY', date(1986, 12, 9)
-        )
+        name = 'test_%s_parses' % name
+        method.__name__ = name
+        setattr(cls, name, method)
 
-    def test_arbitrary_divider_parses(self):
-        self._test_successful_parse(
-            'A1234GY:::09/12/1986', 'A1234GY', date(1986, 12, 9)
-        )
+    @classmethod
+    def add_unsuccessful_method(cls, name, reference):
+        def method(self):
+            self.assertEqual(upload.parse_credit_reference(reference), None)
 
-    def test_hyphenated_date_parses(self):
-        self._test_successful_parse(
-            'A1234GY 09-12-86', 'A1234GY', date(1986, 12, 9)
-        )
+        name = 'test_%s_does_not_parse' % name
+        method.__name__ = name
+        setattr(cls, name, method)
 
-    def test_non_separated_date_parses(self):
-        self._test_successful_parse(
-            'A1234GY091286', 'A1234GY', date(1986, 12, 9)
-        )
 
-    def test_space_separated_date_parses(self):
-        self._test_successful_parse(
-            'A1234GY 09 12 86', 'A1234GY', date(1986, 12, 9)
-        )
-
-    def test_non_zero_padded_date_parses(self):
-        self._test_successful_parse(
-            'A1234GY 9/6/86', 'A1234GY', date(1986, 6, 9)
-        )
-
-    def test_four_digit_year_parses(self):
-        self._test_successful_parse(
-            'A1234GY 09/12/1986', 'A1234GY', date(1986, 12, 9)
-        )
-
-    def test_invalid_prisoner_number_does_not_parse_1(self):
-        self.assertEqual(upload.parse_credit_reference('A1234Y 09/12/1986'), None)
-
-    def test_invalid_prisoner_number_does_not_parse_2(self):
-        self.assertEqual(upload.parse_credit_reference('AA1234GY 09/12/1986'), None)
-
-    def test_one_digit_year_does_not_parse(self):
-        self.assertEqual(upload.parse_credit_reference('A1234GY 1/1/1'), None)
-
-    def test_three_digit_year_does_not_parse(self):
-        self.assertEqual(upload.parse_credit_reference('A1234GY 09/12/198'), None)
-
-    def test_too_many_date_digits_does_not_parse(self):
-        self.assertEqual(upload.parse_credit_reference('A1234GY 0931231986'), None)
-
-    def test_trailing_digits_does_not_parse(self):
-        self.assertEqual(upload.parse_credit_reference('A1234GY 09/12/198600000'), None)
-
-    def test_impossible_day_does_not_parse(self):
-        self.assertEqual(upload.parse_credit_reference('A1234GY 32/12/1986'), None)
-
-    def test_impossible_month_does_not_parse(self):
-        self.assertEqual(upload.parse_credit_reference('A1234GY 09/13/1986'), None)
+CreditReferenceParsingTestCase.add_methods()
 
 
 class ExtractPrisonerDetailsTestCase(TestCase):
