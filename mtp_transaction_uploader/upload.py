@@ -225,7 +225,6 @@ def extract_sender_information(record):
         candidate_roll_number = record.transaction_description
 
     if record.originators_sort_code in ROLL_NUMBER_PATTERNS:
-        pattern = None
         patterns = ROLL_NUMBER_PATTERNS[record.originators_sort_code]
         if isinstance(patterns, dict):
             pattern = patterns.get(record.originators_account_number)
