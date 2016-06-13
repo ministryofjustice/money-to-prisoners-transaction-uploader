@@ -3,15 +3,15 @@ import re
 CREDIT_REF_PATTERN = re.compile(
     '''
     ^
-    [^a-zA-Z]*                    # skip until first letter
-    ([A-Za-z][0-9]{4}[A-Za-z]{2}) # match the prisoner number
-    \D*                           # skip until next digit
-    ([0-9]{1,2})                  # match 1 or 2 digit day of month
-    \D*                           # skip until next digit
-    ([0-9]{1,2})                  # match 1 or 2 digit month
-    \D*                           # skip until next digit
-    ([0-9]{4}|[0-9]{2})           # match 4 or 2 digit year
-    \D*                           # skip until end
+    [^a-zA-Z]*                                 # skip until first letter
+    (?P<reference>[A-Za-z][0-9]{4}[A-Za-z]{2}) # match the prisoner number
+    \D*                                        # skip until next digit
+    (?P<day>[0-9]{1,2})                        # match 1 or 2 digit day of month
+    \D*                                        # skip until next digit
+    (?P<month>[0-9]{1,2})                      # match 1 or 2 digit month
+    \D*                                        # skip until next digit
+    (?P<year>[0-9]{4}|[0-9]{2})                # match 4 or 2 digit year
+    \D*                                        # skip until end
     $
     ''',
     re.X
