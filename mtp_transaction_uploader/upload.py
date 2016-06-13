@@ -19,6 +19,12 @@ logger = logging.getLogger('mtp')
 DATE_FORMAT = '%d%m%y'
 SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
 
+NewFiles = namedtuple('NewFiles', ['new_dates', 'new_filenames'])
+RetrievedFiles = namedtuple('RetrievedFiles', ['new_last_date', 'new_filenames'])
+PrisonerDetails = namedtuple('PrisonerDetails', ['prisoner_number', 'prisoner_dob', 'from_description_field'])
+ParsedReference = namedtuple('ParsedReference', ['prisoner_number', 'prisoner_dob'])
+SenderInformation = namedtuple('SenderInformation', ['sort_code', 'account_number', 'roll_number', 'incomplete'])
+
 
 def download_new_files(last_date):
     new_dates = []
@@ -44,7 +50,6 @@ def download_new_files(last_date):
                         new_dates.append(date)
                         conn.get(filename, localpath=local_path)
 
-    NewFiles = namedtuple('NewFiles', ['new_dates', 'new_filenames'])
     if new_dates and new_filenames:
         sorted_dates, sorted_files = zip(*sorted(zip(new_dates, new_filenames)))
         return NewFiles(list(sorted_dates), list(sorted_files))
@@ -83,8 +88,6 @@ def retrieve_data_services_files():
     if len(new_dates) > 0:
         new_last_date = sorted(new_dates)[-1]
 
-    RetrievedFiles = namedtuple('RetrievedFiles',
-                                ['new_last_date', 'new_filenames'])
     return RetrievedFiles(new_last_date, new_filenames)
 
 
@@ -187,11 +190,6 @@ def extract_prisoner_details(record):
 
     if parsed_ref:
         prisoner_number, prisoner_dob = parsed_ref
-
-        PrisonerDetails = namedtuple(
-            'PrisonerDetails',
-            ['prisoner_number', 'prisoner_dob', 'from_description_field']
-        )
         return PrisonerDetails(prisoner_number, prisoner_dob, from_description_field)
 
 
@@ -211,8 +209,6 @@ def parse_credit_reference(ref):
                 except ValueError:
                     return
 
-            ParsedReference = namedtuple('ParsedReference',
-                                         ['prisoner_number', 'prisoner_dob'])
             return ParsedReference(m.group(1), dob.date())
 
 
@@ -246,11 +242,6 @@ def extract_sender_information(record):
                 if m:
                     roll_number = candidate_roll_number.strip()
 
-    SenderInformation = namedtuple(
-        'SenderInformation', [
-            'sort_code', 'account_number', 'roll_number', 'incomplete'
-        ]
-    )
     return SenderInformation(
         sort_code, account_number, roll_number,
         sort_code is None or account_number is None or
