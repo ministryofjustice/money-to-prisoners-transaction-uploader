@@ -1,33 +1,36 @@
 import re
 
-CREDIT_REF_PATTERN = re.compile(
-    '''
-    ^
-    (
-        [^A-Z]*                                 # skip until first letter
-        (?P<reference_1>[A-Z][0-9]{4}[A-Z]{2})  # match the prisoner number
-        [^0-9]*                                 # skip until next digit
-        (?P<day_1>[0-9]{1,2})                   # match 1 or 2 digit day of month
-        [^0-9]*                                 # skip until next digit
-        (?P<month_1>[0-9]{1,2})                 # match 1 or 2 digit month
-        [^0-9]*                                 # skip until next digit
-        (?P<year_1>[0-9]{4}|[0-9]{2})           # match 4 or 2 digit year
-        [^0-9]*                                 # skip until end
-    |
-        [^0-9]*                                 # skip until first digit
-        (?P<day_2>[0-9]{1,2})                   # match 1 or 2 digit day of month
-        [^0-9]*                                 # skip until next digit
-        (?P<month_2>[0-9]{1,2})                 # match 1 or 2 digit month
-        [^0-9]*                                 # skip until next digit
-        (?P<year_2>[0-9]{4}|[0-9]{2})           # match 4 or 2 digit year
-        [^A-Z]*                                 # skip until next letter
-        (?P<reference_2>[A-Z][0-9]{4}[A-Z]{2})  # match the prisoner number
-        [^A-Z]*                                 # skip until end
-    )
-    $
+_PRISONER_PATTERNS = {
+    'number': '''
+        (?P<number>[A-Z][0-9]{4}[A-Z]{2})  # match prisoner number
     ''',
-    re.X | re.I
-)
+    'date_of_birth': '''
+        (?P<day>[0-9]{1,2})          # match 1 or 2 digit day of month
+        [^0-9]*                      # skip until next digit
+        (?P<month>[0-9]{1,2})        # match 1 or 2 digit month
+        [^0-9]*                      # skip until next digit
+        (?P<year>[0-9]{4}|[0-9]{2})  # match 4 or 2 digit year
+    '''
+}
+CREDIT_REF_PATTERN = re.compile('''
+    ^
+    [^A-Z]*              # skip until first letter
+    %(number)s
+    [^0-9A-Z]*           # skip until dob, forbid trailing letters as they can be typos
+    %(date_of_birth)s
+    [^0-9]*              # forbid trailing numbers as they can be typos
+    $
+''' % _PRISONER_PATTERNS, re.X | re.I)
+CREDIT_REF_PATTERN_REVERSED = re.compile('''
+    ^
+    [^0-9]*              # skip until first digit
+    %(date_of_birth)s
+    [^0-9A-Z]*           # skip until prisoner number, forbid trailing digits as they can be typos
+    %(number)s
+    [^A-Z]*              # forbid trailing letters as they can be typos
+    $
+''' % _PRISONER_PATTERNS, re.X | re.I)
+
 FILE_PATTERN_STR = (
     '''
     Y01A\.CARS\.\#D\.             # static file format

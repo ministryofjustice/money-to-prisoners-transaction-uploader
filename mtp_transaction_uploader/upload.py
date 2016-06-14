@@ -12,7 +12,7 @@ from slumber.exceptions import SlumberHttpBaseException
 
 from . import settings
 from .api_client import get_authenticated_connection
-from .patterns import CREDIT_REF_PATTERN, FILE_PATTERN_STR, ROLL_NUMBER_PATTERNS
+from .patterns import CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR, ROLL_NUMBER_PATTERNS
 
 logger = logging.getLogger('mtp')
 
@@ -198,13 +198,12 @@ def parse_credit_reference(ref):
         return
     matches = CREDIT_REF_PATTERN.match(ref)
     if not matches:
+        matches = CREDIT_REF_PATTERN_REVERSED.match(ref)
+    if not matches:
         return
 
-    reference, day, month, year = matches.group('reference_1'), \
-        matches.group('day_1'), matches.group('month_1'), matches.group('year_1')
-    if not reference:
-        reference, day, month, year = matches.group('reference_2'), \
-            matches.group('day_2'), matches.group('month_2'), matches.group('year_2')
+    number, day, month, year = matches.group('number'), \
+        matches.group('day'), matches.group('month'), matches.group('year')
 
     date_str = '%s/%s/%s' % (day, month, year)
     try:
@@ -218,7 +217,7 @@ def parse_credit_reference(ref):
         except ValueError:
             return
 
-    return ParsedReference(reference.upper(), dob.date())
+    return ParsedReference(number.upper(), dob.date())
 
 
 def extract_sender_information(record):
