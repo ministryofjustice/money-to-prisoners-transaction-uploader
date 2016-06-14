@@ -1,21 +1,36 @@
 import re
 
-CREDIT_REF_PATTERN = re.compile(
-    '''
-    ^
-    [^a-zA-Z]*                    # skip until first letter
-    ([A-Za-z][0-9]{4}[A-Za-z]{2}) # match the prisoner number
-    \D*                           # skip until next digit
-    ([0-9]{1,2})                  # match 1 or 2 digit day of month
-    \D*                           # skip until next digit
-    ([0-9]{1,2})                  # match 1 or 2 digit month
-    \D*                           # skip until next digit
-    ([0-9]{4}|[0-9]{2})           # match 4 or 2 digit year
-    \D*                           # skip until end
-    $
+_PRISONER_PATTERNS = {
+    'number': '''
+        (?P<number>[A-Z][0-9]{4}[A-Z]{2})  # match prisoner number
     ''',
-    re.X
-)
+    'date_of_birth': '''
+        (?P<day>[0-9]{1,2})          # match 1 or 2 digit day of month
+        [^0-9]*                      # skip until next digit
+        (?P<month>[0-9]{1,2})        # match 1 or 2 digit month
+        [^0-9]*                      # skip until next digit
+        (?P<year>[0-9]{4}|[0-9]{2})  # match 4 or 2 digit year
+    '''
+}
+CREDIT_REF_PATTERN = re.compile('''
+    ^
+    [^A-Z]*              # skip until first letter
+    %(number)s
+    [^0-9A-Z]*           # skip until dob, forbid trailing letters as they can be typos
+    %(date_of_birth)s
+    [^0-9]*              # forbid trailing numbers as they can be typos
+    $
+''' % _PRISONER_PATTERNS, re.X | re.I)
+CREDIT_REF_PATTERN_REVERSED = re.compile('''
+    ^
+    [^0-9]*              # skip until first digit
+    %(date_of_birth)s
+    [^0-9A-Z]*           # skip until prisoner number, forbid trailing digits as they can be typos
+    %(number)s
+    [^A-Z]*              # forbid trailing letters as they can be typos
+    $
+''' % _PRISONER_PATTERNS, re.X | re.I)
+
 FILE_PATTERN_STR = (
     '''
     Y01A\.CARS\.\#D\.             # static file format
@@ -59,8 +74,6 @@ ROLL_NUMBER_PATTERNS = {
     '151000': {'23114065': NINE_DIGIT},
     '402311': {'01246356': NINE_DIGIT_WITH_TRAILING_X},
     '402419': {'81228218': ELEVEN_DIGIT},
-    '402311': {'01246356': NINE_DIGIT_WITH_TRAILING_X},
-    '402419': {'81228218': ELEVEN_DIGIT},
     '234448': {'00004000': NINE_DIGIT},
     '622497': {None: re.compile('[A-Za-z]{2,3}[0-9]{7}[A-Za-z]{3}')},
     '402715': {'12440040': TEN_DIGIT},
@@ -85,9 +98,7 @@ ROLL_NUMBER_PATTERNS = {
     '201815': {'90653535': N_DIGIT},
     '207405': {'00775991': EIGHT_DIGIT},
     '090000': {'00050005': re.compile('[A-Za-z][0-9]{8}([A-Za-z]{3})?')},
-    '207842': {'70798924': NINE_DIGIT},
     '830608': {'00255419': re.compile('[0-9]{4}-?[0-9]{5}-?[0-9Xx]')},
-    '207842': {'70798924': NINE_DIGIT},
     '404303': {'81645846': re.compile('[A-Za-z]{3}[0-9]{7}[A-Za-z]{3}')},
     '309546': {'01464485': NINE_DIGIT},
     '202717': {'70885096': EIGHT_DIGIT},

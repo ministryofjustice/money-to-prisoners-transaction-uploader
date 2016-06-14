@@ -12,12 +12,18 @@ from slumber.exceptions import SlumberHttpBaseException
 
 from . import settings
 from .api_client import get_authenticated_connection
-from .patterns import CREDIT_REF_PATTERN, FILE_PATTERN_STR, ROLL_NUMBER_PATTERNS
+from .patterns import CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR, ROLL_NUMBER_PATTERNS
 
 logger = logging.getLogger('mtp')
 
 DATE_FORMAT = '%d%m%y'
 SIZE_LIMIT_BYTES = 50 * 1000 * 1000  # 50MB
+
+NewFiles = namedtuple('NewFiles', ['new_dates', 'new_filenames'])
+RetrievedFiles = namedtuple('RetrievedFiles', ['new_last_date', 'new_filenames'])
+PrisonerDetails = namedtuple('PrisonerDetails', ['prisoner_number', 'prisoner_dob', 'from_description_field'])
+ParsedReference = namedtuple('ParsedReference', ['prisoner_number', 'prisoner_dob'])
+SenderInformation = namedtuple('SenderInformation', ['sort_code', 'account_number', 'roll_number', 'incomplete'])
 
 
 def download_new_files(last_date):
@@ -44,7 +50,6 @@ def download_new_files(last_date):
                         new_dates.append(date)
                         conn.get(filename, localpath=local_path)
 
-    NewFiles = namedtuple('NewFiles', ['new_dates', 'new_filenames'])
     if new_dates and new_filenames:
         sorted_dates, sorted_files = zip(*sorted(zip(new_dates, new_filenames)))
         return NewFiles(list(sorted_dates), list(sorted_files))
@@ -83,8 +88,6 @@ def retrieve_data_services_files():
     if len(new_dates) > 0:
         new_last_date = sorted(new_dates)[-1]
 
-    RetrievedFiles = namedtuple('RetrievedFiles',
-                                ['new_last_date', 'new_filenames'])
     return RetrievedFiles(new_last_date, new_filenames)
 
 
@@ -187,33 +190,34 @@ def extract_prisoner_details(record):
 
     if parsed_ref:
         prisoner_number, prisoner_dob = parsed_ref
-
-        PrisonerDetails = namedtuple(
-            'PrisonerDetails',
-            ['prisoner_number', 'prisoner_dob', 'from_description_field']
-        )
         return PrisonerDetails(prisoner_number, prisoner_dob, from_description_field)
 
 
 def parse_credit_reference(ref):
-    if ref:
-        m = CREDIT_REF_PATTERN.match(ref)
-        if m:
-            date_str = '%s/%s/%s' % (m.group(2), m.group(3), m.group(4))
-            try:
-                dob = datetime.strptime(date_str, '%d/%m/%Y')
-            except ValueError:
-                try:
-                    dob = datetime.strptime(date_str, '%d/%m/%y')
-                    # set correct century for 2 digit year
-                    if dob.year > datetime.today().year - 10:
-                        dob = dob.replace(year=dob.year - 100)
-                except ValueError:
-                    return
+    if not ref:
+        return
+    matches = CREDIT_REF_PATTERN.match(ref)
+    if not matches:
+        matches = CREDIT_REF_PATTERN_REVERSED.match(ref)
+    if not matches:
+        return
 
-            ParsedReference = namedtuple('ParsedReference',
-                                         ['prisoner_number', 'prisoner_dob'])
-            return ParsedReference(m.group(1), dob.date())
+    number, day, month, year = matches.group('number'), \
+        matches.group('day'), matches.group('month'), matches.group('year')
+
+    date_str = '%s/%s/%s' % (day, month, year)
+    try:
+        dob = datetime.strptime(date_str, '%d/%m/%Y')
+    except ValueError:
+        try:
+            dob = datetime.strptime(date_str, '%d/%m/%y')
+            # set correct century for 2 digit year
+            if dob.year > datetime.today().year - 10:
+                dob = dob.replace(year=dob.year - 100)
+        except ValueError:
+            return
+
+    return ParsedReference(number.upper(), dob.date())
 
 
 def extract_sender_information(record):
@@ -228,7 +232,6 @@ def extract_sender_information(record):
         candidate_roll_number = record.transaction_description
 
     if record.originators_sort_code in ROLL_NUMBER_PATTERNS:
-        pattern = None
         patterns = ROLL_NUMBER_PATTERNS[record.originators_sort_code]
         if isinstance(patterns, dict):
             pattern = patterns.get(record.originators_account_number)
@@ -246,11 +249,6 @@ def extract_sender_information(record):
                 if m:
                     roll_number = candidate_roll_number.strip()
 
-    SenderInformation = namedtuple(
-        'SenderInformation', [
-            'sort_code', 'account_number', 'roll_number', 'incomplete'
-        ]
-    )
     return SenderInformation(
         sort_code, account_number, roll_number,
         sort_code is None or account_number is None or
