@@ -15,6 +15,8 @@ SFTP_PRIVATE_KEY = os.environ.get('SFTP_PRIVATE_KEY', '~/.ssh/id_rsa')
 SFTP_DIR = os.environ.get('SFTP_DIR', '')
 ACCOUNT_CODE = os.environ.get('ACCOUNT_CODE', '444444')
 
+UPLOAD_REQUEST_SIZE = int(os.environ.get('UPLOAD_REQUEST_SIZE', '1000'))
+
 API_USERNAME = os.environ.get('API_USERNAME', 'bank-admin')
 API_PASSWORD = os.environ.get('API_PASSWORD', 'bank-admin')
 

@@ -1,6 +1,7 @@
 from collections import namedtuple
 from datetime import datetime
 import logging
+import math
 import os
 import re
 import shutil
@@ -102,7 +103,13 @@ def upload_transactions_from_files(files):
         if transactions:
             transaction_count = len(transactions)
             try:
-                conn.transactions.post(clean_request_data(transactions))
+                for i in range(math.ceil(transaction_count/settings.UPLOAD_REQUEST_SIZE)):
+                    conn.transactions.post(
+                        clean_request_data(transactions[
+                            i*settings.UPLOAD_REQUEST_SIZE:
+                            (i+1)*settings.UPLOAD_REQUEST_SIZE
+                        ])
+                    )
                 stmt_date = parse_filename(filename, settings.ACCOUNT_CODE).date()
                 update_new_balance(transactions, stmt_date)
                 logger.info('Uploaded %d transactions from %s' % (transaction_count, filename))
