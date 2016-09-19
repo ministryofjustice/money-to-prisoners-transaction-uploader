@@ -535,6 +535,19 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[3]['sender_roll_number'], None)
         self.assertTrue(transactions[3]['incomplete_sender_info'])
 
+    def test_marks_administrative_transactions(self):
+        with open('tests/data/testfile_administrative_credits') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        self.assertEqual(transactions[0]['category'], 'debit')
+        self.assertEqual(transactions[0]['source'], 'administrative')
+        self.assertEqual(transactions[1]['category'], 'credit')
+        self.assertEqual(transactions[1]['source'], 'administrative')
+        self.assertEqual(transactions[2]['category'], 'credit')
+        self.assertEqual(transactions[2]['source'], 'bank_transfer')
+
     @mock.patch('mtp_transaction_uploader.upload.logger')
     def test_get_transactions_no_records(self, mock_logger):
         with open('tests/data/testfile_no_records') as f:

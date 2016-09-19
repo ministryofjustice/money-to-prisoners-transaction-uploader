@@ -1,4 +1,10 @@
+from collections import namedtuple
 import re
+
+from . import settings
+
+BankAccount = namedtuple('BankAccount', ['account_number', 'sort_code'])
+
 
 _PRISONER_PATTERNS = {
     'number': '''
@@ -106,4 +112,9 @@ ROLL_NUMBER_PATTERNS = {
     '404613': {'91066277': N_DIGIT},
     '609204': TEN_DIGIT,
     '622337': TEN_DIGIT
+}
+
+
+ADMINISTRATIVE_ACCOUNTS = {
+    BankAccount(settings.NOMS_AGENCY_ACCOUNT_NUMBER, settings.NOMS_AGENCY_SORT_CODE)
 }
