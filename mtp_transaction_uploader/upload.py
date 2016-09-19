@@ -13,7 +13,10 @@ from slumber.exceptions import SlumberHttpBaseException
 
 from . import settings
 from .api_client import get_authenticated_connection
-from .patterns import CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR, ROLL_NUMBER_PATTERNS
+from .patterns import (
+    CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR,
+    ROLL_NUMBER_PATTERNS, ADMINISTRATIVE_ACCOUNTS
+)
 
 logger = logging.getLogger('mtp')
 
@@ -24,7 +27,10 @@ NewFiles = namedtuple('NewFiles', ['new_dates', 'new_filenames'])
 RetrievedFiles = namedtuple('RetrievedFiles', ['new_last_date', 'new_filenames'])
 PrisonerDetails = namedtuple('PrisonerDetails', ['prisoner_number', 'prisoner_dob', 'from_description_field'])
 ParsedReference = namedtuple('ParsedReference', ['prisoner_number', 'prisoner_dob'])
-SenderInformation = namedtuple('SenderInformation', ['sort_code', 'account_number', 'roll_number', 'incomplete'])
+SenderInformation = namedtuple(
+    'SenderInformation',
+    ['sort_code', 'account_number', 'roll_number', 'incomplete', 'administrative']
+)
 
 
 def download_new_files(last_date):
@@ -162,8 +168,9 @@ def get_transactions_from_file(data_services_file):
             'processor_type_code': record.transaction_code.value
         }
         # payment credits
-        if (record.transaction_code == TransactionCode.credit_bacs_credit or
-                record.transaction_code == TransactionCode.credit_sundry_credit):
+        if ((record.transaction_code == TransactionCode.credit_bacs_credit or
+                record.transaction_code == TransactionCode.credit_sundry_credit) and
+                not sender_information.administrative):
             transaction['category'] = 'credit'
             transaction['source'] = 'bank_transfer'
 
@@ -259,7 +266,8 @@ def extract_sender_information(record):
     return SenderInformation(
         sort_code, account_number, roll_number,
         sort_code is None or account_number is None or
-        (roll_number_expected and roll_number is None)
+        (roll_number_expected and roll_number is None),
+        (account_number, sort_code) in ADMINISTRATIVE_ACCOUNTS
     )
 
 

@@ -25,3 +25,6 @@ API_CLIENT_SECRET = os.environ.get('API_CLIENT_SECRET', 'bank-admin')
 API_URL = os.environ.get('API_URL', 'http://localhost:8000')
 
 DS_NEW_FILES_DIR = os.environ.get('DS_NEW_FILES_DIR', '/tmp/ds_new_files')
+
+NOMS_AGENCY_ACCOUNT_NUMBER = os.environ.get('NOMS_AGENCY_ACCOUNT_NUMBER', 'PPPPPPPP')
+NOMS_AGENCY_SORT_CODE = os.environ.get('NOMS_AGENCY_SORT_CODE', 'XXXXXX')
