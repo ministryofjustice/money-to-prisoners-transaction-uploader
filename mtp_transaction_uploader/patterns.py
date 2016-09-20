@@ -1,9 +1,6 @@
-from collections import namedtuple
 import re
 
 from . import settings
-
-BankAccount = namedtuple('BankAccount', ['account_number', 'sort_code'])
 
 
 _PRISONER_PATTERNS = {
@@ -115,6 +112,30 @@ ROLL_NUMBER_PATTERNS = {
 }
 
 
-ADMINISTRATIVE_ACCOUNTS = {
-    BankAccount(settings.NOMS_AGENCY_ACCOUNT_NUMBER, settings.NOMS_AGENCY_SORT_CODE)
-}
+class PaymentIdentifier:
+
+    def __init__(self, account_number, sort_code, reference):
+        self.account_number = account_number
+        self.sort_code = sort_code
+        self.reference = reference
+
+    def _field_matches(self, field, value):
+        value = value.strip() if value else value
+        return field is None or field == value
+
+    def matches(self, account_number, sort_code, reference):
+        return (
+            self._field_matches(self.account_number, account_number) and
+            self._field_matches(self.sort_code, sort_code) and
+            self._field_matches(self.reference, reference)
+        )
+
+
+ADMINISTRATIVE_IDENTIFIERS = [
+    PaymentIdentifier(
+        settings.NOMS_AGENCY_ACCOUNT_NUMBER, settings.NOMS_AGENCY_SORT_CODE, None
+    ),
+    PaymentIdentifier(
+        None, None, settings.WORLDPAY_SETTLEMENT_REFERENCE
+    ),
+]

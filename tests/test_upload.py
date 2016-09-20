@@ -546,7 +546,7 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[1]['category'], 'credit')
         self.assertEqual(transactions[1]['source'], 'administrative')
         self.assertEqual(transactions[2]['category'], 'credit')
-        self.assertEqual(transactions[2]['source'], 'bank_transfer')
+        self.assertEqual(transactions[2]['source'], 'administrative')
 
     @mock.patch('mtp_transaction_uploader.upload.logger')
     def test_get_transactions_no_records(self, mock_logger):
