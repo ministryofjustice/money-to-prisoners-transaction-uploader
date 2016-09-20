@@ -15,7 +15,7 @@ from . import settings
 from .api_client import get_authenticated_connection
 from .patterns import (
     CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR,
-    ROLL_NUMBER_PATTERNS, ADMINISTRATIVE_ACCOUNTS
+    ROLL_NUMBER_PATTERNS, ADMINISTRATIVE_IDENTIFIERS
 )
 
 logger = logging.getLogger('mtp')
@@ -267,7 +267,10 @@ def extract_sender_information(record):
         sort_code, account_number, roll_number,
         sort_code is None or account_number is None or
         (roll_number_expected and roll_number is None),
-        (account_number, sort_code) in ADMINISTRATIVE_ACCOUNTS
+        any([
+            identifier.matches(account_number, sort_code, record.reference_number)
+            for identifier in ADMINISTRATIVE_IDENTIFIERS
+        ])
     )
 
 
