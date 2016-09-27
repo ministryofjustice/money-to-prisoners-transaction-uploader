@@ -268,7 +268,9 @@ def extract_sender_information(record):
         sort_code is None or account_number is None or
         (roll_number_expected and roll_number is None),
         any([
-            identifier.matches(account_number, sort_code, record.reference_number)
+            identifier.matches(
+                account_number, sort_code, record.transaction_description, record.reference_number
+            )
             for identifier in ADMINISTRATIVE_IDENTIFIERS
         ])
     )
