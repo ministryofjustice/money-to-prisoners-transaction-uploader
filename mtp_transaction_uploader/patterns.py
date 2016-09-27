@@ -114,28 +114,38 @@ ROLL_NUMBER_PATTERNS = {
 
 class PaymentIdentifier:
 
-    def __init__(self, account_number, sort_code, reference):
+    def __init__(self, account_number, sort_code, sender_name, reference):
         self.account_number = account_number
         self.sort_code = sort_code
+        self.sender_name = sender_name
         self.reference = reference
 
     def _field_matches(self, field, value):
-        value = value.strip() if value else value
-        return field is None or field == value
+        if field is None:
+            return True
+        value = value.strip() if value else ''
+        return field.match(value) is not None
 
-    def matches(self, account_number, sort_code, reference):
+    def matches(self, account_number, sort_code, sender_name, reference):
         return (
             self._field_matches(self.account_number, account_number) and
             self._field_matches(self.sort_code, sort_code) and
+            self._field_matches(self.sender_name, sender_name) and
             self._field_matches(self.reference, reference)
         )
 
 
 ADMINISTRATIVE_IDENTIFIERS = [
     PaymentIdentifier(
-        settings.NOMS_AGENCY_ACCOUNT_NUMBER, settings.NOMS_AGENCY_SORT_CODE, None
+        re.compile(settings.NOMS_AGENCY_ACCOUNT_NUMBER),
+        re.compile(settings.NOMS_AGENCY_SORT_CODE),
+        None,
+        None
     ),
     PaymentIdentifier(
-        None, None, settings.WORLDPAY_SETTLEMENT_REFERENCE
+        None,
+        None,
+        re.compile(settings.WORLDPAY_SETTLEMENT_REFERENCE),
+        None
     ),
 ]
