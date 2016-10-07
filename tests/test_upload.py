@@ -535,18 +535,28 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[3]['sender_roll_number'], None)
         self.assertTrue(transactions[3]['incomplete_sender_info'])
 
-    def test_marks_administrative_transactions(self):
+    @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
+    def test_marks_administrative_transactions(self, mock_get_conn):
         with open('tests/data/testfile_administrative_credits') as f:
             data_services_file = parse(f)
+
+        conn = mock_get_conn()
+        conn.batches.get.return_value = {
+            'count': 1,
+            'results': [{'id': 10}]
+        }
 
         transactions = upload.get_transactions_from_file(data_services_file)
 
         self.assertEqual(transactions[0]['category'], 'debit')
         self.assertEqual(transactions[0]['source'], 'administrative')
+        self.assertTrue('batch' not in transactions[0])
         self.assertEqual(transactions[1]['category'], 'credit')
         self.assertEqual(transactions[1]['source'], 'administrative')
+        self.assertTrue('batch' not in transactions[1])
         self.assertEqual(transactions[2]['category'], 'credit')
         self.assertEqual(transactions[2]['source'], 'administrative')
+        self.assertEqual(transactions[2]['batch'], 10)
 
     @mock.patch('mtp_transaction_uploader.upload.logger')
     def test_get_transactions_no_records(self, mock_logger):
@@ -619,3 +629,49 @@ class UpdateNewBalanceTestCase(TestCase):
             'date': stmt_date.isoformat(),
             'closing_balance': 330,
         })
+
+
+@mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
+class GetMatchingBatchIdForSettlementTestCase(TestCase):
+
+    def _test_successful_match(self, mock_get_conn, record, expected_date):
+        conn = mock_get_conn()
+        conn.batches.get.return_value = {
+            'count': 1,
+            'results': [{'id': 10}]
+        }
+        batch_id = upload.get_matching_batch_id_for_settlement(record)
+
+        self.assertEqual(batch_id, 10)
+        conn.batches.get.assert_called_with(date=expected_date.isoformat())
+
+    def test_get_matching_batch(self, mock_get_conn):
+        expected_date = date.today().replace(day=1, month=1)
+        record = DataRecord(
+            '1234566717531509324543278990056000000000009802'
+            'TT- GGGGGGGG -0101WORLDPAY                    '
+            '         04036                      '
+        )
+        self._test_successful_match(mock_get_conn, record, expected_date)
+
+    def test_get_matching_batch_from_previous_year(self, mock_get_conn):
+        expected_date = date.today()
+        expected_date = expected_date.replace(
+            day=31, month=12, year=expected_date.year - 1
+        )
+        record = DataRecord(
+            '1234566717531509324543278990056000000000009802'
+            'TT- GGGGGGGG -3112WORLDPAY                    '
+            '         04036                      '
+        )
+        self._test_successful_match(mock_get_conn, record, expected_date)
+
+    def test_invalid_date_is_ignored(self, mock_get_conn):
+        record = DataRecord(
+            '1234566717531509324543278990056000000000009802'
+            'TT- GGGGGGGG -9934WORLDPAY                    '
+            '         04036                      '
+        )
+
+        batch_id = upload.get_matching_batch_id_for_settlement(record)
+        self.assertIsNone(batch_id)
