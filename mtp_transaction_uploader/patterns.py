@@ -112,6 +112,11 @@ ROLL_NUMBER_PATTERNS = {
 }
 
 
+NOMS_ACCOUNT_NUMBER_PATTERN = re.compile(settings.NOMS_AGENCY_ACCOUNT_NUMBER)
+NOMS_SORT_CODE_PATTERN = re.compile(settings.NOMS_AGENCY_SORT_CODE)
+WORLDPAY_SETTLEMENT_REFERENCE_PATTERN = re.compile(settings.WORLDPAY_SETTLEMENT_REFERENCE)
+
+
 class PaymentIdentifier:
 
     def __init__(self, account_number, sort_code, sender_name, reference):
@@ -137,15 +142,15 @@ class PaymentIdentifier:
 
 ADMINISTRATIVE_IDENTIFIERS = [
     PaymentIdentifier(
-        re.compile(settings.NOMS_AGENCY_ACCOUNT_NUMBER),
-        re.compile(settings.NOMS_AGENCY_SORT_CODE),
+        NOMS_ACCOUNT_NUMBER_PATTERN,
+        NOMS_SORT_CODE_PATTERN,
         None,
         None
     ),
     PaymentIdentifier(
         None,
         None,
-        re.compile(settings.WORLDPAY_SETTLEMENT_REFERENCE),
+        WORLDPAY_SETTLEMENT_REFERENCE_PATTERN,
         None
     ),
 ]

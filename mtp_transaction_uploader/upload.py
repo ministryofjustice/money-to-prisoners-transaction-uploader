@@ -1,5 +1,5 @@
 from collections import namedtuple
-from datetime import datetime
+from datetime import date, datetime
 import logging
 import math
 import os
@@ -15,7 +15,8 @@ from . import settings
 from .api_client import get_authenticated_connection
 from .patterns import (
     CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR,
-    ROLL_NUMBER_PATTERNS, ADMINISTRATIVE_IDENTIFIERS
+    ROLL_NUMBER_PATTERNS, ADMINISTRATIVE_IDENTIFIERS,
+    WORLDPAY_SETTLEMENT_REFERENCE_PATTERN
 )
 
 logger = logging.getLogger('mtp')
@@ -184,6 +185,10 @@ def get_transactions_from_file(data_services_file):
         elif record.is_credit():
             transaction['category'] = 'credit'
             transaction['source'] = 'administrative'
+
+            batch_id = get_matching_batch_id_for_settlement(record)
+            if batch_id:
+                transaction['batch'] = batch_id
         # all debits
         elif record.is_debit():
             transaction['category'] = 'debit'
@@ -274,6 +279,25 @@ def extract_sender_information(record):
             for identifier in ADMINISTRATIVE_IDENTIFIERS
         ])
     )
+
+
+def get_matching_batch_id_for_settlement(record):
+    m = WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.match(record.transaction_description)
+    if m:
+        try:
+            batch_date = datetime.strptime(m.group(1), '%d%m').date()
+
+            today = date.today()
+            batch_date = batch_date.replace(year=today.year)
+            if batch_date > today:
+                batch_date = batch_date.replace(year=today.year - 1)
+
+            conn = get_authenticated_connection()
+            response = conn.batches.get(date=batch_date.isoformat())
+            if response.get('results'):
+                return response['results'][0]['id']
+        except ValueError:
+            pass
 
 
 def update_new_balance(transactions, date):
