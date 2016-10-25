@@ -1,5 +1,5 @@
 from collections import namedtuple
-from datetime import date, datetime
+from datetime import date, datetime, time
 import logging
 import math
 import os
@@ -9,6 +9,7 @@ import shutil
 from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
 from pysftp import Connection
+from pytz import utc
 from slumber.exceptions import SlumberHttpBaseException
 
 from . import settings
@@ -157,6 +158,7 @@ def get_transactions_from_file(data_services_file):
             continue
 
         sender_information = extract_sender_information(record)
+        received_at = datetime.combine(record.date, time(12, 0, 0, tzinfo=utc))
         transaction = {
             'amount': record.amount,
             'sender_sort_code': sender_information.sort_code,
@@ -165,7 +167,7 @@ def get_transactions_from_file(data_services_file):
             'incomplete_sender_info': sender_information.incomplete,
             'sender_name': record.transaction_description,
             'reference': record.reference_number,
-            'received_at': record.date.isoformat(),
+            'received_at': received_at.isoformat(),
             'processor_type_code': record.transaction_code.value
         }
         # payment credits
