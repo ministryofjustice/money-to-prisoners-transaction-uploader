@@ -31,7 +31,7 @@ PrisonerDetails = namedtuple('PrisonerDetails', ['prisoner_number', 'prisoner_do
 ParsedReference = namedtuple('ParsedReference', ['prisoner_number', 'prisoner_dob'])
 SenderInformation = namedtuple(
     'SenderInformation',
-    ['sort_code', 'account_number', 'roll_number', 'incomplete', 'administrative']
+    ['sort_code', 'account_number', 'roll_number', 'anonymous', 'incomplete', 'administrative']
 )
 
 
@@ -164,6 +164,7 @@ def get_transactions_from_file(data_services_file):
             'sender_sort_code': sender_information.sort_code,
             'sender_account_number': sender_information.account_number,
             'sender_roll_number': sender_information.roll_number,
+            'blocked': sender_information.anonymous,
             'incomplete_sender_info': sender_information.incomplete,
             'sender_name': record.transaction_description,
             'reference': record.reference_number,
@@ -270,10 +271,11 @@ def extract_sender_information(record):
                 if m:
                     roll_number = candidate_roll_number.strip()
 
+    anonymous = sort_code is None or account_number is None
+    incomplete_sender_info = anonymous or (roll_number_expected and roll_number is None)
+
     return SenderInformation(
-        sort_code, account_number, roll_number,
-        sort_code is None or account_number is None or
-        (roll_number_expected and roll_number is None),
+        sort_code, account_number, roll_number, anonymous, incomplete_sender_info,
         any([
             identifier.matches(
                 account_number, sort_code, record.transaction_description, record.reference_number

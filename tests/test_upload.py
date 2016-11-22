@@ -525,15 +525,34 @@ class TransactionsFromFileTestCase(TestCase):
         # check that account number is 0s instead of None for matching building society
         self.assertEqual(transactions[0]['category'], 'credit')
         self.assertEqual(transactions[0]['sender_account_number'], '00000000')
+        self.assertFalse(transactions[0]['incomplete_sender_info'])
 
+        # no sort code
         self.assertEqual(transactions[1]['sender_sort_code'], None)
         self.assertTrue(transactions[1]['incomplete_sender_info'])
+        self.assertTrue(transactions[1]['blocked'])
 
+        # no account number
         self.assertEqual(transactions[2]['sender_account_number'], None)
         self.assertTrue(transactions[2]['incomplete_sender_info'])
+        self.assertTrue(transactions[2]['blocked'])
+
+        # no roll number
+        self.assertEqual(transactions[3]['sender_roll_number'], None)
+        self.assertTrue(transactions[3]['incomplete_sender_info'])
+        self.assertFalse(transactions[3]['blocked'])
+
+    def test_marks_incomplete_sender_information_for_metro_bank(self):
+        with open('tests/data/testfile_metro_bank') as f:
+            data_services_file = parse(f)
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        self.assertEqual(len(transactions), 4)
 
         self.assertEqual(transactions[3]['sender_roll_number'], None)
         self.assertTrue(transactions[3]['incomplete_sender_info'])
+        self.assertFalse(transactions[3]['blocked'])
 
     @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
     def test_marks_administrative_transactions(self, mock_get_conn):

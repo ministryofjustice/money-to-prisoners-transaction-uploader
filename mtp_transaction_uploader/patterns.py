@@ -49,6 +49,7 @@ ELEVEN_DIGIT = re.compile('[0-9]{11}')
 FOURTEEN_DIGIT = re.compile('[0-9]{14}')
 N_DIGIT = re.compile('[0-9]+')
 NINE_DIGIT_WITH_TRAILING_X = re.compile('[0-9]{9}[0-9Xx]')
+ALWAYS_FAIL = re.compile('$a')
 
 ROLL_NUMBER_PATTERNS = {
     '621719': TEN_DIGIT,
@@ -108,7 +109,11 @@ ROLL_NUMBER_PATTERNS = {
     '086115': {'00000515': N_DIGIT},
     '404613': {'91066277': N_DIGIT},
     '609204': TEN_DIGIT,
-    '622337': TEN_DIGIT
+    '622337': TEN_DIGIT,
+    # metro bank
+    '203253': ALWAYS_FAIL,
+    # think money
+    '161623': ALWAYS_FAIL,
 }
 
 
