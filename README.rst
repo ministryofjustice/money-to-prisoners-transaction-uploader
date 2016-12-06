@@ -1,15 +1,6 @@
 MTP Transaction Uploader
 ========================
 
-Requirements
-------------
-Only python 3.4 supported.
-
-- requests-oauthlib
-- slumber
-- pysftp
-- bankline-direct-parser (MoJ)
-
 Usage
 -----
 The following environment variables determine how the uploader works:
@@ -36,4 +27,4 @@ Testing
 
 .. code-block::
 
-    nosetests
+    ./run.py test
