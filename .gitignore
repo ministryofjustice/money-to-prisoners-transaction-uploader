@@ -1,45 +1,10 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
+*.DS_Store
 *.py[cod]
-
-# Distribution / packaging
-.Python
-env/
 venv/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# app-specific
+mtp_transaction_uploader/local.py
 
-# Unit test / coverage reports
-reports/
-htmlcov/
-.tox/
+# testing
 .coverage
-.coverage.*
-.cache
 nosetests.xml
-coverage.xml
-*,cover
-.hypothesis/
-
-# Translations
-*.mo
-*.pot
-
-# Sphinx documentation
-docs/_build/
