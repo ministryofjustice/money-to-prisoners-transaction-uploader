@@ -1,27 +1,28 @@
-FROM ubuntu:trusty
+FROM buildpack-deps:xenial
 
-RUN echo "Europe/London" | cat > /etc/timezone && dpkg-reconfigure --frontend noninteractive tzdata
-RUN locale-gen "en_GB.UTF-8"
-ENV LC_CTYPE=en_GB.UTF-8
+# setup environment
+RUN apt-get update && apt-get install -y --no-install-recommends locales tzdata
+RUN set -ex; echo en_GB.UTF-8 UTF-8 > /etc/locale.gen && locale-gen
+ENV LANG=en_GB.UTF-8
+ENV TZ=Europe/London
+RUN timedatectl set-timezone Europe/London || true
 
-RUN apt-get update && \
-    apt-get install -y \
-        software-properties-common python-software-properties \
-        build-essential git python3-all python3-all-dev python3-setuptools \
-        curl ntp python3-pip python-pip libffi-dev libssl-dev
-
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
-
-WORKDIR /app
-
+# install libraries
+RUN apt-get install -y --no-install-recommends software-properties-common build-essential cron python3-all-dev python3-pip python3-venv
 RUN pip3 install -U setuptools pip wheel
 
+# cleanup
+RUN rm -rf /var/lib/apt/lists/*
+
+# pre-create directories and log files
+WORKDIR /app
+RUN set -ex; touch \
+  /var/log/transaction-uploader.stdout \
+  /var/log/transaction-uploader.stderr
+
+# add app and install python packages
 ADD . /app
 RUN pip3 install -r requirements/docker.txt
 
-RUN touch /var/log/transaction-uploader.stdout
-RUN touch /var/log/transaction-uploader.stderr
-
-# wait until container is running to install crontab to ensure environment
-# variables are available
+# wait until container is running to install crontab to ensure environment variables are available
 CMD python3 /app/install_crontab.py && tail -f /var/log/transaction-uploader.stdout /var/log/transaction-uploader.stderr
