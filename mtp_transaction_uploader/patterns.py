@@ -114,6 +114,8 @@ ROLL_NUMBER_PATTERNS = {
     '203253': ALWAYS_FAIL,
     # think money
     '161623': ALWAYS_FAIL,
+    # currently unknown
+    '200353': {'73152596': ALWAYS_FAIL}
 }
 
 
