@@ -11,13 +11,15 @@ from bankline_parser.data_services.enums import TransactionCode
 from pysftp import Connection
 from pytz import utc
 from slumber.exceptions import SlumberHttpBaseException
+from mtp_common.bank_accounts import (
+    is_correspondence_account, roll_number_required, roll_number_valid_for_account
+)
 
 from . import settings
 from .api_client import get_authenticated_connection
 from .patterns import (
     CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR,
-    ROLL_NUMBER_PATTERNS, ADMINISTRATIVE_IDENTIFIERS,
-    WORLDPAY_SETTLEMENT_REFERENCE_PATTERN
+    ADMINISTRATIVE_IDENTIFIERS, WORLDPAY_SETTLEMENT_REFERENCE_PATTERN
 )
 
 logger = logging.getLogger('mtp')
@@ -248,31 +250,28 @@ def extract_sender_information(record):
     roll_number = None
     roll_number_expected = False
 
-    if record.is_debit():
-        candidate_roll_number = record.reference_number
-    else:
-        candidate_roll_number = record.transaction_description
+    # 0 filled normally means absent, but some building societies
+    # use it for roll number accounts
+    building_soc_account_number = account_number or ('0' * 8)
 
-    if record.originators_sort_code in ROLL_NUMBER_PATTERNS:
-        patterns = ROLL_NUMBER_PATTERNS[record.originators_sort_code]
-        if isinstance(patterns, dict):
-            pattern = patterns.get(record.originators_account_number)
+    if roll_number_required(sort_code, building_soc_account_number):
+        roll_number_expected = True
+        account_number = building_soc_account_number
+
+        if record.is_debit():
+            candidate_roll_number = record.reference_number
         else:
-            pattern = patterns
+            candidate_roll_number = record.transaction_description
 
-        if pattern:
-            roll_number_expected = True
-            if account_number is None:
-                # 0 filled normally means absent, but some building societies
-                # use it for roll number accounts
-                account_number = '0' * 8
-            if candidate_roll_number:
-                m = pattern.match(candidate_roll_number)
-                if m:
-                    roll_number = candidate_roll_number.strip()
+        if roll_number_valid_for_account(sort_code, account_number, candidate_roll_number):
+            roll_number = candidate_roll_number.strip()
 
     anonymous = sort_code is None or account_number is None
-    incomplete_sender_info = anonymous or (roll_number_expected and roll_number is None)
+    incomplete_sender_info = (
+        anonymous or
+        (roll_number_expected and roll_number is None) or
+        is_correspondence_account(sort_code, account_number)
+    )
 
     return SenderInformation(
         sort_code, account_number, roll_number, anonymous, incomplete_sender_info,

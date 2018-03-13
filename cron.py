@@ -86,7 +86,7 @@ def main():
     try:
         # run the transaction uploader
         transaction_uploader()
-    except:
+    except:  # noqa
         if sentry:
             sentry.captureException()
         else:
