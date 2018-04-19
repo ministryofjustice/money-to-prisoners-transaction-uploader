@@ -27,6 +27,9 @@ class CreditReferenceParsingTestCase(TestCase):
         'four_digit_year': ('A1234GY 09/12/1986', 'A1234GY', date(1986, 12, 9)),
         'reference_generator_format': ('A1234GY/09/12/1986', 'A1234GY', date(1986, 12, 9)),
 
+        'trailing_characters_1': ('A1234GY091286A6', 'A1234GY', date(1986, 12, 9)),
+        'trailing_characters_2': ('A1234GY091286 61', 'A1234GY', date(1986, 12, 9)),
+
         'reversed_format_1': ('09/12/86 A1234GY', 'A1234GY', date(1986, 12, 9)),
         'reversed_format_2': ('10/06/80 A1214GY', 'A1214GY', date(1980, 6, 10)),
         'reversed_natural_date': ('1/6/1980 A1214GY', 'A1214GY', date(1980, 6, 1)),
@@ -36,6 +39,10 @@ class CreditReferenceParsingTestCase(TestCase):
         'reversed_with_separators_long_year': ('9/12/1986/A1234GY', 'A1234GY', date(1986, 12, 9)),
         'reversed_without_spaces': ('091286A1234GY', 'A1234GY', date(1986, 12, 9)),
         'reversed_without_spaces_long_year': ('09121986A1234GY', 'A1234GY', date(1986, 12, 9)),
+
+        'reversed_trailing_characters_1': ('091286A1234GY67', 'A1234GY', date(1986, 12, 9)),
+        'reversed_trailing_characters_2': ('091286A1234GY A', 'A1234GY', date(1986, 12, 9)),
+
     }
     unsuccessful = {
         'blank': '',
@@ -54,9 +61,13 @@ class CreditReferenceParsingTestCase(TestCase):
         'impossible_month': 'A1234GY 09/13/1986',
         'invalid_leap_day': 'A1234GY 29/02/1981',
 
+        'trailing_characters_no_non_numeric': 'A1234GY0912198661',
+
         'reversed_trailing_letters': '29/02/1981 A1234GYA',
         'reversed_invalid_leap_day': '29/02/1981 A1234GY',
         'reversed_three_digit_year': '09/12/198 A1234GY',
+
+        'reversed_trailing_characters_no_non_letter': '091286A1234GYA7',
     }
 
     @classmethod
