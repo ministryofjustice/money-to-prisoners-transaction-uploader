@@ -21,7 +21,7 @@ CREDIT_REF_PATTERN = re.compile('''
     %(number)s
     [^0-9A-Z]*           # skip until dob, forbid trailing letters as they can be typos
     %(date_of_birth)s
-    [^0-9]*              # forbid trailing numbers as they can be typos
+    ([^0-9].*)?          # trailing characters are allowed, but first must not be numeric
     $
 ''' % _PRISONER_PATTERNS, re.X | re.I)
 CREDIT_REF_PATTERN_REVERSED = re.compile('''
@@ -30,7 +30,7 @@ CREDIT_REF_PATTERN_REVERSED = re.compile('''
     %(date_of_birth)s
     [^0-9A-Z]*           # skip until prisoner number, forbid trailing digits as they can be typos
     %(number)s
-    [^A-Z]*              # forbid trailing letters as they can be typos
+    ([^A-Z].*)?          # trailing characters are allowed, but first must not be a letter
     $
 ''' % _PRISONER_PATTERNS, re.X | re.I)
 
