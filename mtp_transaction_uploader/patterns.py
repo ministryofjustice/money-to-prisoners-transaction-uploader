@@ -36,8 +36,8 @@ CREDIT_REF_PATTERN_REVERSED = re.compile('''
 
 FILE_PATTERN_STR = (
     '''
-    Y01A\.CARS\.\#D\.             # static file format
-    %(code)s\.                    # our unique account code
+    Y01A\\.CARS\\.\\#D\\.         # static file format
+    %(code)s\\.                   # our unique account code
     D(?P<date>[0-9]{6})           # date that file was generated (ddmmyy)
     '''
 )
