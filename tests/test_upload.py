@@ -42,8 +42,8 @@ class CreditReferenceParsingTestCase(TestCase):
 
         'reversed_trailing_characters_1': ('091286A1234GY67', 'A1234GY', date(1986, 12, 9)),
         'reversed_trailing_characters_2': ('091286A1234GY A', 'A1234GY', date(1986, 12, 9)),
-
     }
+
     unsuccessful = {
         'blank': '',
         'null': None,
@@ -72,6 +72,14 @@ class CreditReferenceParsingTestCase(TestCase):
 
     @classmethod
     def add_methods(cls):
+        today = date.today()
+        cls.successful['short_year_this_century'] = (
+            'A1234GY 01/02/%s' % str(today.year - 10)[-2:], 'A1234GY', date(today.year - 10, 2, 1)
+        )
+        cls.successful['short_year_last_century'] = (
+            'A1234GY 01/02/%s' % str(today.year - 9)[-2:], 'A1234GY', date(today.year - 9 - 100, 2, 1)
+        )
+
         for name, values in cls.successful.items():
             cls.add_successful_method(name, *values)
         for name, reference in cls.unsuccessful.items():
