@@ -113,11 +113,11 @@ def upload_transactions_from_files(files):
         if transactions:
             transaction_count = len(transactions)
             try:
-                for i in range(math.ceil(transaction_count/settings.UPLOAD_REQUEST_SIZE)):
+                for i in range(math.ceil(transaction_count / settings.UPLOAD_REQUEST_SIZE)):
                     conn.transactions.post(
                         clean_request_data(transactions[
-                            i*settings.UPLOAD_REQUEST_SIZE:
-                            (i+1)*settings.UPLOAD_REQUEST_SIZE
+                            i * settings.UPLOAD_REQUEST_SIZE:
+                            (i + 1) * settings.UPLOAD_REQUEST_SIZE
                         ])
                     )
                 stmt_date = parse_filename(filename, settings.ACCOUNT_CODE).date()
