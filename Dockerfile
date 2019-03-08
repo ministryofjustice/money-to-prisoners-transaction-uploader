@@ -42,5 +42,12 @@ RUN set -ex; touch \
 ADD . /app
 RUN pip3 install -r requirements/docker.txt
 
+ARG APP_GIT_COMMIT
+ARG APP_BUILD_TAG
+ARG APP_BUILD_DATE
+ENV APP_GIT_COMMIT ${APP_GIT_COMMIT}
+ENV APP_BUILD_TAG ${APP_BUILD_TAG}
+ENV APP_BUILD_DATE ${APP_BUILD_DATE}
+
 # wait until container is running to install crontab to ensure environment variables are available
 CMD python3 /app/install_crontab.py && tail -f /var/log/transaction-uploader.stdout /var/log/transaction-uploader.stderr
