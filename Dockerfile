@@ -1,18 +1,36 @@
-FROM buildpack-deps:xenial
+FROM buildpack-deps:bionic
 
-# setup environment
-RUN apt-get update && apt-get install -y --no-install-recommends locales tzdata
-RUN set -ex; echo en_GB.UTF-8 UTF-8 > /etc/locale.gen && locale-gen
+# setup UK environment and install libraries and python
+RUN set -ex; \
+  apt-get update \
+  && \
+  DEBIAN_FRONTEND=noninteractive apt-get install \
+  -y --no-install-recommends --no-install-suggests \
+  -o DPkg::Options::=--force-confdef \
+  locales tzdata \
+  && \
+  echo en_GB.UTF-8 UTF-8 > /etc/locale.gen \
+  && \
+  locale-gen \
+  && \
+  rm /etc/localtime \
+  && \
+  ln -s /usr/share/zoneinfo/Europe/London /etc/localtime \
+  && \
+  dpkg-reconfigure --frontend noninteractive tzdata \
+  && \
+  DEBIAN_FRONTEND=noninteractive apt-get install \
+  -y --no-install-recommends --no-install-suggests \
+  -o DPkg::Options::=--force-confdef \
+  software-properties-common build-essential \
+  python3-all-dev python3-setuptools python3-pip python3-wheel \
+  cron \
+  && \
+  rm -rf /var/lib/apt/lists/* \
+  && \
+  pip3 install -U setuptools pip wheel
 ENV LANG=en_GB.UTF-8
 ENV TZ=Europe/London
-RUN timedatectl set-timezone Europe/London || true
-
-# install libraries
-RUN apt-get install -y --no-install-recommends software-properties-common build-essential cron python3-all-dev python3-pip python3-venv
-RUN pip3 install -U setuptools pip wheel
-
-# cleanup
-RUN rm -rf /var/lib/apt/lists/*
 
 # pre-create directories and log files
 WORKDIR /app
