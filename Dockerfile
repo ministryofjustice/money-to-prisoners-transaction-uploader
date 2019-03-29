@@ -32,15 +32,24 @@ RUN set -ex; \
 ENV LANG=en_GB.UTF-8
 ENV TZ=Europe/London
 
-# pre-create directories and log files
-WORKDIR /app
-RUN set -ex; touch \
-  /var/log/transaction-uploader.stdout \
-  /var/log/transaction-uploader.stderr
-
 # add app and install python packages
-ADD . /app
+WORKDIR /app
+COPY requirements /app/requirements
 RUN pip3 install -r requirements/docker.txt
+COPY . /app
+
+# add mtp user and log files
+RUN set -ex; \
+  useradd -M -d /app -s /usr/sbin/nologin mtp \
+  && \
+  test $(id -u mtp) = 1000 \
+  && \
+  touch /var/log/transaction-uploader.stdout /var/log/transaction-uploader.stderr \
+  && \
+  chown -R mtp /app /var/log /var/run /run
+# template-deploy version must run as root because of how cron works
+# cloud-platform can call /app/cron.py as user 1000
+# USER 1000
 
 ARG APP_GIT_COMMIT
 ARG APP_GIT_BRANCH
