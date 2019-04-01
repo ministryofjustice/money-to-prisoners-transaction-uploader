@@ -28,3 +28,10 @@ Testing
 .. code-block::
 
     ./run.py test
+
+Deploying
+---------
+
+This is handled by `money-to-prisoners-deploy`_.
+
+.. _money-to-prisoners-deploy: https://github.com/ministryofjustice/money-to-prisoners-deploy/
