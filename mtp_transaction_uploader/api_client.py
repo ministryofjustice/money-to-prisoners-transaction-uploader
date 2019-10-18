@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 
 from oauthlib.oauth2 import LegacyApplicationClient
+from requests.auth import HTTPBasicAuth
 from requests_oauthlib import OAuth2Session
 import slumber
 
@@ -24,8 +25,7 @@ def get_authenticated_connection():
         token_url=REQUEST_TOKEN_URL,
         username=settings.API_USERNAME,
         password=settings.API_PASSWORD,
-        client_id=settings.API_CLIENT_ID,
-        client_secret=settings.API_CLIENT_SECRET
+        auth=HTTPBasicAuth(settings.API_CLIENT_ID, settings.API_CLIENT_SECRET)
     )
 
     return slumber.API(

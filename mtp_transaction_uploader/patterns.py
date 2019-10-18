@@ -4,18 +4,18 @@ from . import settings
 
 
 _PRISONER_PATTERNS = {
-    'number': '''
+    'number': """
         (?P<number>[A-Z][0-9]{4}[A-Z]{2})  # match prisoner number
-    ''',
-    'date_of_birth': '''
+    """,
+    'date_of_birth': """
         (?P<day>[0-9]{1,2})          # match 1 or 2 digit day of month
         [^0-9]*                      # skip until next digit
         (?P<month>[0-9]{1,2})        # match 1 or 2 digit month
         [^0-9]*                      # skip until next digit
         (?P<year>[0-9]{4}|[0-9]{2})  # match 4 or 2 digit year
-    '''
+    """
 }
-CREDIT_REF_PATTERN = re.compile('''
+CREDIT_REF_PATTERN = re.compile("""
     ^
     [^A-Z]*              # skip until first letter
     %(number)s
@@ -23,8 +23,8 @@ CREDIT_REF_PATTERN = re.compile('''
     %(date_of_birth)s
     ([^0-9].*)?          # trailing characters are allowed, but first must not be numeric
     $
-''' % _PRISONER_PATTERNS, re.X | re.I)
-CREDIT_REF_PATTERN_REVERSED = re.compile('''
+""" % _PRISONER_PATTERNS, re.X | re.I)
+CREDIT_REF_PATTERN_REVERSED = re.compile("""
     ^
     [^0-9]*              # skip until first digit
     %(date_of_birth)s
@@ -32,14 +32,14 @@ CREDIT_REF_PATTERN_REVERSED = re.compile('''
     %(number)s
     ([^A-Z].*)?          # trailing characters are allowed, but first must not be a letter
     $
-''' % _PRISONER_PATTERNS, re.X | re.I)
+""" % _PRISONER_PATTERNS, re.X | re.I)
 
 FILE_PATTERN_STR = (
-    '''
+    """
     Y01A\\.CARS\\.\\#D\\.         # static file format
     %(code)s\\.                   # our unique account code
     D(?P<date>[0-9]{6})           # date that file was generated (ddmmyy)
-    '''
+    """
 )
 
 
