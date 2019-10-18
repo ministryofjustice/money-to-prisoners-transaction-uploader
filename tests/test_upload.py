@@ -183,7 +183,7 @@ class FileDownloadTestCase(TestCase):
         mock_connection_class().__enter__.return_value = mock_connection
 
         mock_connection.listdir.return_value = dirlist
-        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
+        mock_connection.stat.return_value = type('', (), {'st_size': 1000})()
 
         mock_settings.ACCOUNT_CODE = '444444'
         mock_settings.DS_NEW_FILES_DIR = '/'
@@ -324,12 +324,12 @@ class FileDownloadTestCase(TestCase):
 
         mock_connection.listdir.return_value = dirlist
         mock_connection.stat.side_effect = [
-            type("", (), {'st_size': 1000})(),
-            type("", (), {'st_size': 1000})(),
-            type("", (), {'st_size': 1000})(),
-            type("", (), {'st_size': 1000})(),
-            type("", (), {'st_size': 100000000})(),
-            type("", (), {'st_size': 1000})(),
+            type('', (), {'st_size': 1000})(),
+            type('', (), {'st_size': 1000})(),
+            type('', (), {'st_size': 1000})(),
+            type('', (), {'st_size': 1000})(),
+            type('', (), {'st_size': 100000000})(),
+            type('', (), {'st_size': 1000})(),
         ]
 
         mock_settings.ACCOUNT_CODE = '444444'
@@ -385,7 +385,7 @@ class RetrieveNewFilesTestCase(TestCase):
         mock_connection_class().__enter__.return_value = mock_connection
 
         mock_connection.listdir.return_value = dirlist
-        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
+        mock_connection.stat.return_value = type('', (), {'st_size': 1000})()
 
         mock_settings.ACCOUNT_CODE = '444444'
         mock_settings.DS_NEW_FILES_DIR = '/'
@@ -425,7 +425,7 @@ class RetrieveNewFilesTestCase(TestCase):
         mock_connection_class().__enter__.return_value = mock_connection
 
         mock_connection.listdir.return_value = dirlist
-        mock_connection.stat.return_value = type("", (), {'st_size': 1000})()
+        mock_connection.stat.return_value = type('', (), {'st_size': 1000})()
 
         mock_settings.ACCOUNT_CODE = '444444'
         mock_settings.DS_NEW_FILES_DIR = '/'
