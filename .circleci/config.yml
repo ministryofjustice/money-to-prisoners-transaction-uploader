@@ -11,7 +11,9 @@ jobs:
       - run:
           name: Inspect tags
           command: |
-            echo export tag=${app}.${CIRCLE_BRANCH}.${CIRCLE_SHA1:0:7} > /tmp/mtp-env.sh
+            echo export registry=${ECR_ENDPOINT}/prisoner-money/money-to-prisoners > /tmp/mtp-env.sh
+            echo export tag=${app}.${CIRCLE_BRANCH}.${CIRCLE_SHA1:0:7} >> /tmp/mtp-env.sh
+            echo export version=${CIRCLE_BRANCH}.${CIRCLE_SHA1:0:7} >> /tmp/mtp-env.sh
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
@@ -47,14 +49,31 @@ jobs:
             source /tmp/mtp-env.sh
             $(aws ecr get-login --region ${AWS_DEFAULT_REGION} --no-include-email)
             echo "Pushing ${tag} to ECR"
-            docker tag ${tag} ${ECR_ENDPOINT}/prisoner-money/money-to-prisoners:${tag}
-            docker push ${ECR_ENDPOINT}/prisoner-money/money-to-prisoners:${tag}
+            docker tag ${tag} ${registry}:${tag}
+            docker push ${registry}:${tag}
             if [[ "${CIRCLE_BRANCH}" == "master" ]]; then
               echo "Pushing ${app} to ECR (acts as latest)"
-              docker tag ${tag} ${ECR_ENDPOINT}/prisoner-money/money-to-prisoners:${app}
-              docker push ${ECR_ENDPOINT}/prisoner-money/money-to-prisoners:${app}
+              docker tag ${tag} ${registry}:${app}
+              docker push ${registry}:${app}
             fi
             docker logout ${ECR_ENDPOINT}
+      - run:
+          name: Deploy
+          command: |
+            if [[ "${CIRCLE_BRANCH}" == "master" ]]; then
+              source /tmp/mtp-env.sh
+              echo "Deploying to Test"
+
+              echo -n ${K8S_CLUSTER_CERT} | base64 -d > /tmp/mtp-k8s-ca.crt
+              kubectl config set-cluster ${K8S_CLUSTER_NAME} --certificate-authority=/tmp/mtp-k8s-ca.crt --server=https://api.${K8S_CLUSTER_NAME}
+              kubectl config set-credentials circleci --token=${K8S_TOKEN}
+              kubectl config set-context ${K8S_CLUSTER_NAME} --cluster=${K8S_CLUSTER_NAME} --user=circleci --namespace=${K8S_NAMESPACE}
+              kubectl config use-context ${K8S_CLUSTER_NAME}
+              IMAGE=${registry}:${tag}
+              kubectl patch configmap app-versions --patch "{\"data\": {\"${app}\": \"${version}\"}}"
+              # NB: patching operations assume that ONLY ONE container exists
+              kubectl patch tzcronjob ${app} --type json --patch "[{\"op\": \"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\": \"${IMAGE}\"}]"
+            fi
       - run:
           name: Clean up ECR
           command: |
