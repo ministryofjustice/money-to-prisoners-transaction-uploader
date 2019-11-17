@@ -1,6 +1,5 @@
 # Dependencies needed for all environments
 # NB: this is not the complete set needed to run the app
-Jinja2==2.8
 pysftp==0.2.8
 requests-oauthlib==0.5.0
 slumber==0.7.1

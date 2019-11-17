@@ -24,7 +24,6 @@ RUN set -ex; \
   -o DPkg::Options::=--force-confdef \
   software-properties-common build-essential \
   python3-all-dev python3-setuptools python3-pip python3-wheel \
-  cron \
   && \
   rm -rf /var/lib/apt/lists/* \
   && \
@@ -40,16 +39,10 @@ COPY . /app
 
 # add mtp user and log files
 RUN set -ex; \
-  useradd -M -d /app -s /usr/sbin/nologin mtp \
-  && \
-  test $(id -u mtp) = 1000 \
-  && \
-  touch /var/log/transaction-uploader.stdout /var/log/transaction-uploader.stderr \
+  useradd -u 1000 -M -d /app -s /usr/sbin/nologin mtp \
   && \
   chown -R mtp /app /var/log /var/run /run
-# template-deploy version must run as root because of how cron works
-# cloud-platform can call /app/cron.py as user 1000
-# USER 1000
+USER 1000
 
 ARG APP_GIT_COMMIT
 ARG APP_GIT_BRANCH
@@ -60,5 +53,4 @@ ENV APP_GIT_BRANCH ${APP_GIT_BRANCH}
 ENV APP_BUILD_TAG ${APP_BUILD_TAG}
 ENV APP_BUILD_DATE ${APP_BUILD_DATE}
 
-# wait until container is running to install crontab to ensure environment variables are available
-CMD python3 /app/install_crontab.py && tail -f /var/log/transaction-uploader.stdout /var/log/transaction-uploader.stderr
+CMD python3 /app/mtp_transaction_uploader/main.py
