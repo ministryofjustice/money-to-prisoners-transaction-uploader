@@ -23,7 +23,7 @@ RUN set -ex; \
   -y --no-install-recommends --no-install-suggests \
   -o DPkg::Options::=--force-confdef \
   software-properties-common build-essential \
-  python3-all-dev python3-setuptools python3-pip python3-wheel \
+  python3-all-dev python3-setuptools python3-pip python3-wheel python3-venv \
   && \
   rm -rf /var/lib/apt/lists/* \
   && \
@@ -31,10 +31,18 @@ RUN set -ex; \
 ENV LANG=en_GB.UTF-8
 ENV TZ=Europe/London
 
-# add app and install python packages
 WORKDIR /app
-COPY requirements /app/requirements
-RUN pip3 install -r requirements/docker.txt
+
+# install virtual environment
+RUN set -ex; \
+  /usr/bin/python3 -m venv venv && \
+  venv/bin/pip install -U setuptools pip wheel
+
+# cache python packages, unless requirements change
+COPY ./requirements requirements
+RUN venv/bin/pip install -r requirements/docker.txt
+
+# add app
 COPY . /app
 
 # add mtp user and log files
@@ -53,4 +61,4 @@ ENV APP_GIT_BRANCH ${APP_GIT_BRANCH}
 ENV APP_BUILD_TAG ${APP_BUILD_TAG}
 ENV APP_BUILD_DATE ${APP_BUILD_DATE}
 
-CMD python3 /app/mtp_transaction_uploader/main.py
+CMD venv/bin/python3 /app/mtp_transaction_uploader/main.py
