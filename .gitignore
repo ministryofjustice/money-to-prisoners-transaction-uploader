@@ -6,5 +6,6 @@ venv/
 mtp_transaction_uploader/local.py
 
 # testing
+/reports/
 .coverage
 nosetests.xml

@@ -1,0 +1,2 @@
+# Place CI-only dependencies here
+-r dev.txt
