@@ -1,5 +1,8 @@
-MTP Transaction Uploader
-========================
+Transaction Uploader
+====================
+
+Reads Money to Prisoners (MTP) bank account to facilitate reconciliation.
+Part of the Prisoner Money suite of apps.
 
 Usage
 -----
@@ -24,6 +27,9 @@ The following environment variables determine how the uploader works:
 
 Testing
 -------
+
+.. image:: https://circleci.com/gh/ministryofjustice/money-to-prisoners-transaction-uploader.svg?style=svg
+    :target: https://circleci.com/gh/ministryofjustice/money-to-prisoners-transaction-uploader
 
 .. code-block::
 

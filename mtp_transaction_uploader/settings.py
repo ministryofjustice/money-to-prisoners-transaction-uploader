@@ -1,7 +1,5 @@
 import os
-
-# NB: only values listed here will be available as environment variables when the cron job runs
-# ensure that the environment and setting names match
+from urllib.parse import urljoin
 
 UPLOADER_DISABLED = os.environ.get('UPLOADER_DISABLED', '')
 
@@ -17,12 +15,35 @@ ACCOUNT_CODE = os.environ.get('ACCOUNT_CODE', '444444')
 
 UPLOAD_REQUEST_SIZE = int(os.environ.get('UPLOAD_REQUEST_SIZE', '1000'))
 
+START_PAGE_URL = os.environ.get('START_PAGE_URL', 'https://www.gov.uk/send-prisoner-money')
+CASHBOOK_URL = (
+    f'https://{os.environ["PUBLIC_CASHBOOK_HOST"]}'
+    if os.environ.get('PUBLIC_CASHBOOK_HOST')
+    else 'http://localhost:8001'
+)
+BANK_ADMIN_URL = (
+    f'https://{os.environ["PUBLIC_BANK_ADMIN_HOST"]}'
+    if os.environ.get('PUBLIC_BANK_ADMIN_HOST')
+    else 'http://localhost:8002'
+)
+NOMS_OPS_URL = (
+    f'https://{os.environ["PUBLIC_NOMS_OPS_HOST"]}'
+    if os.environ.get('PUBLIC_NOMS_OPS_HOST')
+    else 'http://localhost:8003'
+)
+SEND_MONEY_URL = (
+    f'https://{os.environ["PUBLIC_SEND_MONEY_HOST"]}'
+    if os.environ.get('PUBLIC_SEND_MONEY_HOST')
+    else 'http://localhost:8004'
+)
+
 API_USERNAME = os.environ.get('API_USERNAME', 'bank-admin')
 API_PASSWORD = os.environ.get('API_PASSWORD', 'bank-admin')
 
 API_CLIENT_ID = os.environ.get('API_CLIENT_ID', 'bank-admin')
 API_CLIENT_SECRET = os.environ.get('API_CLIENT_SECRET', 'bank-admin')
 API_URL = os.environ.get('API_URL', 'http://localhost:8000')
+PUBLIC_STATIC_URL = urljoin(SEND_MONEY_URL, '/static/')
 
 DS_NEW_FILES_DIR = os.environ.get('DS_NEW_FILES_DIR', '/tmp/ds_new_files')
 

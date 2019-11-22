@@ -1,7 +1,0 @@
-{% for param, value in params -%}
-{%- if value -%}
-{{ param }}={{ value }}
-{% endif -%}
-{%- endfor %}
-30 2 * * * python3 /app/cron.py 1>> /var/log/transaction-uploader.stdout 2>> /var/log/transaction-uploader.stderr
-
