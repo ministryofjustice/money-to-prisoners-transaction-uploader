@@ -1,6 +1,6 @@
 import re
 
-from . import settings
+from mtp_transaction_uploader import settings
 
 
 _PRISONER_PATTERNS = {

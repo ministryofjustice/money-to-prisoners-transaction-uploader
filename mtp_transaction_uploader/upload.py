@@ -8,18 +8,18 @@ import shutil
 
 from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
-from pysftp import Connection
-from pytz import utc
-from slumber.exceptions import SlumberHttpBaseException
 from mtp_common.bank_accounts import (
     is_correspondence_account, roll_number_required, roll_number_valid_for_account
 )
+from pysftp import Connection
+from pytz import utc
+from slumber.exceptions import SlumberHttpBaseException
 
-from . import settings
-from .api_client import get_authenticated_connection
-from .patterns import (
+from mtp_transaction_uploader import settings
+from mtp_transaction_uploader.api_client import get_authenticated_connection
+from mtp_transaction_uploader.patterns import (
     CREDIT_REF_PATTERN, CREDIT_REF_PATTERN_REVERSED, FILE_PATTERN_STR,
-    ADMINISTRATIVE_IDENTIFIERS, WORLDPAY_SETTLEMENT_REFERENCE_PATTERN
+    ADMINISTRATIVE_IDENTIFIERS, WORLDPAY_SETTLEMENT_REFERENCE_PATTERN,
 )
 
 logger = logging.getLogger('mtp')

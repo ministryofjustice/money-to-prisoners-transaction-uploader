@@ -5,7 +5,7 @@ from requests.auth import HTTPBasicAuth
 from requests_oauthlib import OAuth2Session
 import slumber
 
-from . import settings
+from mtp_transaction_uploader import settings
 
 REQUEST_TOKEN_URL = urljoin(settings.API_URL, '/oauth2/token/')
 
