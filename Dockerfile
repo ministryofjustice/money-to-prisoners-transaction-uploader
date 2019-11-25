@@ -23,4 +23,4 @@ ENV APP_GIT_BRANCH ${APP_GIT_BRANCH}
 ENV APP_BUILD_TAG ${APP_BUILD_TAG}
 ENV APP_BUILD_DATE ${APP_BUILD_DATE}
 
-CMD venv/bin/python3 /app/mtp_transaction_uploader/main.py
+CMD venv/bin/python main.py
