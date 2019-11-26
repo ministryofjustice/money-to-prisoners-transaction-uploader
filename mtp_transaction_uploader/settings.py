@@ -3,8 +3,11 @@ from urllib.parse import urljoin
 
 UPLOADER_DISABLED = os.environ.get('UPLOADER_DISABLED', '')
 
-ENV = os.environ.get('ENV', 'local')
+ENVIRONMENT = os.environ.get('ENV', 'local')
+APP_BUILD_DATE = os.environ.get('APP_BUILD_DATE', '')
+APP_BUILD_TAG = os.environ.get('APP_BUILD_TAG', '')
 APP_GIT_COMMIT = os.environ.get('APP_GIT_COMMIT', '')
+
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
 
 SFTP_HOST = os.environ.get('SFTP_HOST', '')
