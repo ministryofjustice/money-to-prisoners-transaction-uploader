@@ -1,5 +1,9 @@
 FROM base
 
+# pre-create directories
+RUN set -ex; mkdir -p \
+  reports
+
 # cache python packages, unless requirements change
 COPY ./requirements requirements
 RUN venv/bin/pip install -r requirements/docker.txt

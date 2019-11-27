@@ -24,11 +24,15 @@ jobs:
             source /tmp/mtp-env.sh
             $(aws ecr get-login --region ${AWS_DEFAULT_REGION} --no-include-email)
       - run:
-          name: Build docker image
+          name: Pull base image
           command: |
             source /tmp/mtp-env.sh
             docker pull ${registry}:base
             docker tag ${registry}:base base
+      - run:
+          name: Build docker image
+          command: |
+            source /tmp/mtp-env.sh
             docker build \
               --force-rm \
               --build-arg APP_GIT_COMMIT=${CIRCLE_SHA1} \
@@ -39,12 +43,19 @@ jobs:
               .
       - run:
           name: Test docker image
+          environment:
+            IGNORE_LOCAL_SETTINGS: 'True'
           command: |
             source /tmp/mtp-env.sh
             docker run \
               --name ${app} \
               ${tag} \
-              /bin/bash -c 'mkdir /app/reports && /app/venv/bin/pip install -r requirements/ci.txt && /app/venv/bin/nosetests --with-xunit --xunit-file=/app/reports/junit.xml'
+              /bin/bash -c '/app/venv/bin/pip install -r requirements/ci.txt && /app/venv/bin/nosetests --with-xunit --xunit-file=/app/reports/junit.xml'
+      - run:
+          name: Extract test reports
+          when: always
+          command: |
+            source /tmp/mtp-env.sh
             docker cp ${app}:/app/reports /tmp/reports
             docker rm ${app}
       - store_artifacts:
@@ -68,7 +79,7 @@ jobs:
           command: |
             source /tmp/mtp-env.sh
             docker logout ${ECR_ENDPOINT}
-      - run:
+      - deploy:
           name: Deploy to test
           command: |
             if [[ "${CIRCLE_BRANCH}" == "master" ]]; then
