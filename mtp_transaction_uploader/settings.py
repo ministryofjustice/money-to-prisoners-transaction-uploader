@@ -50,8 +50,10 @@ PUBLIC_STATIC_URL = urljoin(SEND_MONEY_URL, '/static/')
 
 DS_NEW_FILES_DIR = os.environ.get('DS_NEW_FILES_DIR', '/tmp/ds_new_files')
 
-NOMS_AGENCY_ACCOUNT_NUMBER = os.environ.get('NOMS_AGENCY_ACCOUNT_NUMBER', 'PPPPPPPP')
-NOMS_AGENCY_SORT_CODE = os.environ.get('NOMS_AGENCY_SORT_CODE', 'XXXXXX')
+# fallback account is for tests
+NOMS_AGENCY_ACCOUNT_NUMBER = os.environ.get('NOMS_AGENCY_ACCOUNT_NUMBER', '67175315')
+NOMS_AGENCY_SORT_CODE = os.environ.get('NOMS_AGENCY_SORT_CODE', '123456')
+
 WORLDPAY_SETTLEMENT_REFERENCE = os.environ.get('WORLDPAY_SETTLEMENT_REFERENCE', '.*GGGGGGGG.*([0-9]{4}).*')
 
 if os.environ.get('IGNORE_LOCAL_SETTINGS', '') != 'True':
