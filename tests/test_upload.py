@@ -620,6 +620,31 @@ class TransactionsFromFileTestCase(TestCase):
 
         self.assertEqual(transactions, None)
 
+    @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
+    def test_excludes_records_from_other_accounts(self, mock_get_conn):
+        with open('tests/data/testfile_multiple_accounts') as f:
+            data_services_file = parse(f)
+
+        conn = mock_get_conn()
+        conn.batches.get.return_value = {
+            'count': 1,
+            'results': [{'id': 10}]
+        }
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        self.assertEqual(len(transactions), 2)
+        # transaction 0 - debit
+        self.assertEqual(transactions[0]['category'], 'debit')
+        self.assertEqual(transactions[0]['source'], 'administrative')
+        self.assertEqual(transactions[0]['amount'], 288615)
+        self.assertEqual(transactions[0]['received_at'], '2004-02-05T12:00:00+00:00')
+        # transaction 1 - credit (actually credit record 2 but credit 1 is filtered out)
+        self.assertEqual(transactions[1]['category'], 'credit')
+        self.assertEqual(transactions[1]['source'], 'bank_transfer')
+        self.assertEqual(transactions[1]['amount'], 9802)
+        self.assertEqual(transactions[1]['received_at'], '2004-02-07T12:00:00+00:00')
+
 
 @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
 class UpdateNewBalanceTestCase(TestCase):

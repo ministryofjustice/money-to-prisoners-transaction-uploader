@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import date, datetime, time
+import itertools
 import logging
 import math
 import os
@@ -149,13 +150,14 @@ def get_transactions_from_file(data_services_file):
         logger.error('Errors: %s' % data_services_file.errors)
         return None
 
-    if not data_services_file.accounts or \
-            not data_services_file.accounts[0].records:
+    filtered_records = filter_relevant_records_from_all_accounts(data_services_file.accounts)
+
+    if not filtered_records:
         logger.info('No records found.')
         return None
 
     transactions = []
-    for record in data_services_file.accounts[0].records:
+    for record in filtered_records:
         if record.is_total() or record.is_balance():
             continue
 
@@ -202,6 +204,18 @@ def get_transactions_from_file(data_services_file):
         transactions.append(transaction)
 
     return transactions
+
+
+def filter_relevant_records_from_all_accounts(accounts):
+    # read transactions from all data services file "accounts"
+    # to cater for both single-account and multiple-account formats
+    records = itertools.chain.from_iterable(account.records for account in accounts)
+    # filter out only transactions involving account selected with settings
+    records = filter(lambda record: (
+        record.branch_sort_code == settings.NOMS_AGENCY_SORT_CODE and
+        record.branch_account_number == settings.NOMS_AGENCY_ACCOUNT_NUMBER
+    ), records)
+    return list(records)
 
 
 def extract_prisoner_details(record):
