@@ -150,7 +150,7 @@ def get_transactions_from_file(data_services_file):
         logger.error('Errors: %s' % data_services_file.errors)
         return None
 
-    filtered_records = filter_records_from_all_accounts(data_services_file.accounts)
+    filtered_records = filter_relevant_records_from_all_accounts(data_services_file.accounts)
 
     if not filtered_records:
         logger.info('No records found.')
@@ -206,8 +206,11 @@ def get_transactions_from_file(data_services_file):
     return transactions
 
 
-def filter_records_from_all_accounts(accounts):
+def filter_relevant_records_from_all_accounts(accounts):
+    # read transactions from all data services file "accounts"
+    # to cater for both single-account and multiple-account formats
     records = itertools.chain.from_iterable(account.records for account in accounts)
+    # filter out only transactions involving account selected with settings
     records = filter(lambda record: (
         record.branch_sort_code == settings.NOMS_AGENCY_SORT_CODE and
         record.branch_account_number == settings.NOMS_AGENCY_ACCOUNT_NUMBER
