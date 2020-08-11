@@ -12,7 +12,7 @@ from bankline_parser.data_services.enums import TransactionCode
 from mtp_common.bank_accounts import (
     is_correspondence_account, roll_number_required, roll_number_valid_for_account
 )
-from pysftp import Connection
+from pysftp import Connection, CnOpts
 from pytz import utc
 from slumber.exceptions import SlumberHttpBaseException
 
@@ -41,8 +41,10 @@ SenderInformation = namedtuple(
 def download_new_files(last_date):
     new_dates = []
     new_filenames = []
+    opts = CnOpts()
+    opts.hostkeys = None
     with Connection(settings.SFTP_HOST, username=settings.SFTP_USER,
-                    private_key=settings.SFTP_PRIVATE_KEY) as conn:
+                    private_key=settings.SFTP_PRIVATE_KEY, cnopts=opts) as conn:
         with conn.cd(settings.SFTP_DIR):
             dir_listing = conn.listdir()
             for filename in dir_listing:
