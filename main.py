@@ -44,19 +44,14 @@ def setup_monitoring():
     }
     sentry = None
     if os.environ.get('SENTRY_DSN'):
-        from raven import Client
+        import sentry_sdk
 
-        sentry = Client(
-            dsn=os.environ['SENTRY_DSN'],
-            release=os.environ.get('APP_GIT_COMMIT', 'unknown'),
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.ENVIRONMENT,
+            release=settings.APP_GIT_COMMIT,
+            send_default_pii=False
         )
-        logging_conf['handlers']['sentry'] = {
-            'level': 'ERROR',
-            'class': 'raven.handlers.logging.SentryHandler',
-            'client': sentry,
-        }
-        logging_conf['root']['handlers'].append('sentry')
-        logging_conf['loggers']['mtp']['handlers'].append('sentry')
     logging.config.dictConfig(logging_conf)
     logger = logging.getLogger('mtp')
 
