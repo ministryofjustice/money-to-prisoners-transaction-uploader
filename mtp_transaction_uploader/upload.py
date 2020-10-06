@@ -190,6 +190,11 @@ def get_transactions_from_file(data_services_file):
                 transaction['prisoner_number'] = number
                 transaction['prisoner_dob'] = dob.isoformat()
                 transaction['reference_in_sender_field'] = from_description_field
+
+            if settings.MARK_TRANSACTIONS_AS_UNIDENTIFIED:
+                # makes all credit-type transactions "unidentified" so that they will not be credited or refunded
+                transaction['blocked'] = True
+                transaction['incomplete_sender_info'] = True
         # other credits (e.g. bacs returned)
         elif record.is_credit():
             transaction['category'] = 'credit'
