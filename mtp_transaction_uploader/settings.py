@@ -56,6 +56,17 @@ NOMS_AGENCY_SORT_CODE = os.environ.get('NOMS_AGENCY_SORT_CODE', '123456')
 
 WORLDPAY_SETTLEMENT_REFERENCE = os.environ.get('WORLDPAY_SETTLEMENT_REFERENCE', '.*GGGGGGGG.*([0-9]{4}).*')
 
+# when enabled, all incoming credit-type transactions will be marked as having incomplete sender info and as blocked
+# thereby being treated as "unidentified" which prevents the associated credit from being creditable or refundable.
+# i.e. it will no longer be possible to send in credits by bank transfer.
+# does not apply to transactions already marked as administrative. off by default for now.
+MARK_TRANSACTIONS_AS_UNIDENTIFIED = os.environ.get('MARK_TRANSACTIONS_AS_UNIDENTIFIED', '').lower() in ('1', 'true')
+
+# global setting to turn on all November 2 HMPPS policy changes
+NOVEMBER_SECOND_CHANGES_LIVE = os.environ.get('NOVEMBER_SECOND_CHANGES_LIVE', '').lower() in ('1', 'true')
+if NOVEMBER_SECOND_CHANGES_LIVE:
+    MARK_TRANSACTIONS_AS_UNIDENTIFIED = True
+
 if os.environ.get('IGNORE_LOCAL_SETTINGS', '') != 'True':
     try:
         from .local import *  # noqa

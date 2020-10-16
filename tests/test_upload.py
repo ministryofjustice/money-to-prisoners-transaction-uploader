@@ -439,9 +439,17 @@ class RetrieveNewFilesTestCase(TestCase):
         self.assertEqual(None, new_last_date)
 
 
-class TransactionsFromFileTestCase(TestCase):
+def setup_settings(mock_settings, mark_transactions_as_unidentified=False):
+    mock_settings.NOMS_AGENCY_ACCOUNT_NUMBER = '67175315'
+    mock_settings.NOMS_AGENCY_SORT_CODE = '123456'
+    mock_settings.MARK_TRANSACTIONS_AS_UNIDENTIFIED = mark_transactions_as_unidentified
 
-    def test_get_transactions(self):
+
+class TransactionsFromFileTestCase(TestCase):
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_get_transactions(self, mock_settings):
+        setup_settings(mock_settings)
+
         with open('tests/data/testfile_1') as f:
             data_services_file = parse(f)
 
@@ -472,6 +480,9 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[1]['prisoner_number'], 'A1234BY')
         self.assertEqual(transactions[1]['prisoner_dob'], '1986-12-09')
 
+        self.assertEqual(transactions[1]['blocked'], False)
+        self.assertEqual(transactions[1]['incomplete_sender_info'], False)
+
         # transaction 2 - credit
         self.assertEqual(transactions[2]['category'], 'credit')
         self.assertEqual(transactions[2]['source'], 'bank_transfer')
@@ -483,6 +494,9 @@ class TransactionsFromFileTestCase(TestCase):
 
         self.assertEqual(transactions[2]['prisoner_number'], 'B4321XZ')
         self.assertEqual(transactions[2]['prisoner_dob'], '1992-11-08')
+
+        self.assertEqual(transactions[2]['blocked'], False)
+        self.assertEqual(transactions[2]['incomplete_sender_info'], False)
 
     def test_populates_roll_numbers_when_relevant_sort_codes_found(self):
         with open('tests/data/testfile_roll_number') as f:
@@ -533,7 +547,10 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(len(transactions), 1)
         self.assertEqual(transactions[0]['sender_roll_number'], None)
 
-    def test_marks_incomplete_sender_information(self):
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_marks_incomplete_sender_information(self, mock_settings):
+        setup_settings(mock_settings)
+
         with open('tests/data/testfile_sender_information') as f:
             data_services_file = parse(f)
 
@@ -561,7 +578,10 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertTrue(transactions[3]['incomplete_sender_info'])
         self.assertFalse(transactions[3]['blocked'])
 
-    def test_marks_incomplete_sender_information_for_metro_bank(self):
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_marks_incomplete_sender_information_for_metro_bank(self, mock_settings):
+        setup_settings(mock_settings)
+
         with open('tests/data/testfile_metro_bank') as f:
             data_services_file = parse(f)
 
@@ -595,6 +615,65 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[2]['category'], 'credit')
         self.assertEqual(transactions[2]['source'], 'administrative')
         self.assertEqual(transactions[2]['batch'], 10)
+
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_marking_all_credit_transactions_as_unidentified(self, mock_settings):
+        setup_settings(mock_settings, mark_transactions_as_unidentified=True)
+
+        with open('tests/data/testfile_1') as f:
+            data_services_file = parse(f)
+        transactions = upload.get_transactions_from_file(data_services_file)
+        self.assertEqual(len(transactions), 3)
+
+        # transaction 0 - debit
+        self.assertEqual(transactions[0]['category'], 'debit')
+        self.assertEqual(transactions[0]['source'], 'administrative')
+
+        # transaction 1 - credit
+        self.assertEqual(transactions[1]['category'], 'credit')
+        self.assertEqual(transactions[1]['source'], 'bank_transfer')
+        self.assertEqual(transactions[1]['sender_account_number'], '29696666')
+        self.assertEqual(transactions[1]['sender_sort_code'], '608006')
+        self.assertEqual(transactions[1]['prisoner_number'], 'A1234BY')
+        self.assertEqual(transactions[1]['prisoner_dob'], '1986-12-09')
+        self.assertEqual(transactions[1]['blocked'], True)
+        self.assertEqual(transactions[1]['incomplete_sender_info'], True)
+
+        # transaction 2 - credit
+        self.assertEqual(transactions[2]['category'], 'credit')
+        self.assertEqual(transactions[2]['source'], 'bank_transfer')
+        self.assertEqual(transactions[2]['sender_account_number'], '78990056')
+        self.assertEqual(transactions[2]['sender_sort_code'], '245432')
+        self.assertEqual(transactions[2]['prisoner_number'], 'B4321XZ')
+        self.assertEqual(transactions[2]['prisoner_dob'], '1992-11-08')
+        self.assertEqual(transactions[2]['blocked'], True)
+        self.assertEqual(transactions[2]['incomplete_sender_info'], True)
+
+    @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_not_marking_administrative_credits_as_unidentified(self, mock_settings, mock_get_conn):
+        setup_settings(mock_settings, mark_transactions_as_unidentified=True)
+
+        with open('tests/data/testfile_administrative_credits') as f:
+            data_services_file = parse(f)
+        conn = mock_get_conn()
+        conn.batches.get.return_value = {
+            'count': 1,
+            'results': [{'id': 10}]
+        }
+        transactions = upload.get_transactions_from_file(data_services_file)
+        self.assertEqual(len(transactions), 3)
+
+        self.assertEqual(transactions[0]['category'], 'debit')
+        self.assertEqual(transactions[0]['source'], 'administrative')
+        self.assertEqual(transactions[1]['category'], 'credit')
+        self.assertEqual(transactions[1]['source'], 'administrative')
+        self.assertEqual(transactions[1]['blocked'], False)
+        self.assertEqual(transactions[1]['incomplete_sender_info'], False)
+        self.assertEqual(transactions[2]['category'], 'credit')
+        self.assertEqual(transactions[2]['source'], 'administrative')
+        self.assertEqual(transactions[2]['blocked'], False)
+        self.assertEqual(transactions[2]['incomplete_sender_info'], False)
 
     @mock.patch('mtp_transaction_uploader.upload.logger')
     def test_get_transactions_no_records(self, mock_logger):
