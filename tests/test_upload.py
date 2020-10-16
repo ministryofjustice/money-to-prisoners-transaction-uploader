@@ -439,9 +439,17 @@ class RetrieveNewFilesTestCase(TestCase):
         self.assertEqual(None, new_last_date)
 
 
-class TransactionsFromFileTestCase(TestCase):
+def setup_settings(mock_settings, mark_transactions_as_unidentified=False):
+    mock_settings.NOMS_AGENCY_ACCOUNT_NUMBER = '67175315'
+    mock_settings.NOMS_AGENCY_SORT_CODE = '123456'
+    mock_settings.MARK_TRANSACTIONS_AS_UNIDENTIFIED = mark_transactions_as_unidentified
 
-    def test_get_transactions(self):
+
+class TransactionsFromFileTestCase(TestCase):
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_get_transactions(self, mock_settings):
+        setup_settings(mock_settings)
+
         with open('tests/data/testfile_1') as f:
             data_services_file = parse(f)
 
@@ -539,7 +547,10 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(len(transactions), 1)
         self.assertEqual(transactions[0]['sender_roll_number'], None)
 
-    def test_marks_incomplete_sender_information(self):
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_marks_incomplete_sender_information(self, mock_settings):
+        setup_settings(mock_settings)
+
         with open('tests/data/testfile_sender_information') as f:
             data_services_file = parse(f)
 
@@ -567,7 +578,10 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertTrue(transactions[3]['incomplete_sender_info'])
         self.assertFalse(transactions[3]['blocked'])
 
-    def test_marks_incomplete_sender_information_for_metro_bank(self):
+    @mock.patch('mtp_transaction_uploader.upload.settings')
+    def test_marks_incomplete_sender_information_for_metro_bank(self, mock_settings):
+        setup_settings(mock_settings)
+
         with open('tests/data/testfile_metro_bank') as f:
             data_services_file = parse(f)
 
@@ -604,9 +618,7 @@ class TransactionsFromFileTestCase(TestCase):
 
     @mock.patch('mtp_transaction_uploader.upload.settings')
     def test_marking_all_credit_transactions_as_unidentified(self, mock_settings):
-        mock_settings.NOMS_AGENCY_ACCOUNT_NUMBER = '67175315'
-        mock_settings.NOMS_AGENCY_SORT_CODE = '123456'
-        mock_settings.MARK_TRANSACTIONS_AS_UNIDENTIFIED = True
+        setup_settings(mock_settings, mark_transactions_as_unidentified=True)
 
         with open('tests/data/testfile_1') as f:
             data_services_file = parse(f)
@@ -640,9 +652,7 @@ class TransactionsFromFileTestCase(TestCase):
     @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
     @mock.patch('mtp_transaction_uploader.upload.settings')
     def test_not_marking_administrative_credits_as_unidentified(self, mock_settings, mock_get_conn):
-        mock_settings.NOMS_AGENCY_ACCOUNT_NUMBER = '67175315'
-        mock_settings.NOMS_AGENCY_SORT_CODE = '123456'
-        mock_settings.MARK_TRANSACTIONS_AS_UNIDENTIFIED = True
+        setup_settings(mock_settings, mark_transactions_as_unidentified=True)
 
         with open('tests/data/testfile_administrative_credits') as f:
             data_services_file = parse(f)
