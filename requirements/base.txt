@@ -1,8 +1,10 @@
 # Dependencies needed for all environments
-# NB: this is not the complete set needed to run the app
+
+money-to-prisoners-common~=10.1.0
+
 pysftp==0.2.9
 requests-oauthlib>=1,<2
 slumber>=0.7,<0.8
 pytz>=2019.1
 
-git+http://github.com/ministryofjustice/bankline-direct-parser
+bankline-direct-parser==0.4
