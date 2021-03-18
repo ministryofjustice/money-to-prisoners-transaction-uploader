@@ -666,6 +666,38 @@ class TransactionsFromFileTestCase(TestCase):
             ((), {'date': '2003-09-23'})
         )
 
+    @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
+    def test_marks_administrative_transactions_without_date(self, mock_get_conn):
+        with open('tests/data/testfile_administrative_credits_without_date') as f:
+            data_services_file = parse(f)
+
+        conn = mock_get_conn()
+        conn.batches.get.return_value = {
+            'count': 1,
+            'results': [{'id': 101}],
+        }
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        # test file has 3 settlement transactions which are all "administrative" credits
+        self.assertEqual(len(transactions), 3)
+        self.assertTrue(all(
+            transaction['category'] == 'credit' and transaction['source'] == 'administrative'
+            for transaction in transactions
+        ))
+
+        # but only 1 transaction has a 4 digit date in the reference corresponding to the batch date
+        conn.batches.get.assert_called_once()
+        settlements_with_date = list(filter(lambda t: 'batch' in t, transactions))
+        self.assertEqual(len(settlements_with_date), 1)
+        settlement_with_date = settlements_with_date[0]
+        self.assertEqual(settlement_with_date['batch'], 101)
+        self.assertEqual(settlement_with_date['amount'], 9802)
+
+        # the others cannot be matched to a batch date
+        settlements_without_date = list(filter(lambda t: 'batch' not in t, transactions))
+        self.assertEqual(len(settlements_without_date), 2)
+
     @mock.patch('mtp_transaction_uploader.upload.settings')
     def test_marking_all_credit_transactions_as_unidentified(self, mock_settings):
         setup_settings(mock_settings, mark_transactions_as_unidentified=True)

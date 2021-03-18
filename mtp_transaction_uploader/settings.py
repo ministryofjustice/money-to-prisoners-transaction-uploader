@@ -54,6 +54,7 @@ DS_NEW_FILES_DIR = os.environ.get('DS_NEW_FILES_DIR', '/tmp/ds_new_files')
 NOMS_AGENCY_ACCOUNT_NUMBER = os.environ.get('NOMS_AGENCY_ACCOUNT_NUMBER', '67175315')
 NOMS_AGENCY_SORT_CODE = os.environ.get('NOMS_AGENCY_SORT_CODE', '123456')
 
+
 # WorldPay settlements can be in the form:
 # - "PREFIX0101" with the last 4 digits being a day/month
 # - "PREFIX01" with the last 2 digits being a day
@@ -62,6 +63,8 @@ NOMS_AGENCY_SORT_CODE = os.environ.get('NOMS_AGENCY_SORT_CODE', '123456')
 # (i.e. when the money was collected from the sender / transaction was captured)
 # this regular expression must have a capturing group called 'date' which accepts 0, 2 or 4 digits
 WORLDPAY_SETTLEMENT_REFERENCE = os.environ.get('WORLDPAY_SETTLEMENT_REFERENCE', 'TT- GGGGGGGG -(?P<date>(\\d\\d){0,2})')
+# settlement transactions without date (likely via CHAPS)
+WORLDPAY_SETTLEMENT_REF_NO_DATE = os.environ.get('WORLDPAY_SETTLEMENT_REF_NO_DATE', 'TT- GGGGGGGG -')
 
 # when enabled, all incoming credit-type transactions will be marked as having incomplete sender info and as blocked
 # thereby being treated as "unidentified" which prevents the associated credit from being creditable or refundable.

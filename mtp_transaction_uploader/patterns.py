@@ -48,6 +48,7 @@ NOMS_SORT_CODE_PATTERN = re.compile(settings.NOMS_AGENCY_SORT_CODE)
 WORLDPAY_SETTLEMENT_REFERENCE_PATTERN = re.compile(settings.WORLDPAY_SETTLEMENT_REFERENCE)
 assert WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.groupindex.get('date'), \
     'WORLDPAY_SETTLEMENT_REFERENCE needs a capturing group called "date"'
+WORLDPAY_SETTLEMENT_REF_NO_DATE_PATTERN = re.compile(settings.WORLDPAY_SETTLEMENT_REF_NO_DATE)
 
 
 class PaymentIdentifier:
@@ -86,10 +87,18 @@ ADMINISTRATIVE_IDENTIFIERS = [
         None,
         WORLDPAY_SETTLEMENT_REFERENCE_PATTERN,
     ),
+    # WorldPay settlements with a date in the reference
     PaymentIdentifier(
         None,
         None,
         WORLDPAY_SETTLEMENT_REFERENCE_PATTERN,
         None,
+    ),
+    # WorldPay settlements without a date in the reference
+    PaymentIdentifier(
+        None,
+        None,
+        WORLDPAY_SETTLEMENT_REF_NO_DATE_PATTERN,
+        None
     ),
 ]
