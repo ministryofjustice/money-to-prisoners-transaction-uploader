@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date
 from unittest import mock, TestCase
 
 from bankline_parser.data_services import parse
@@ -148,30 +148,30 @@ class FilenameParsingTestCase(TestCase):
     def test_correct_format_returns_correct_date(self):
         filename = 'Y01A.CARS.#D.444444.D091214'
         expected_date = date(2014, 12, 9)
-        parsed_datetime = upload.parse_filename(filename, '444444')
-        self.assertEqual(expected_date, parsed_datetime.date())
+        parsed_date = upload.parse_filename(filename, '444444')
+        self.assertEqual(expected_date, parsed_date)
 
     def test_correct_format_returns_correct_date_pre_2000(self):
         filename = 'Y01A.CARS.#D.444444.D091299'
         expected_date = date(1999, 12, 9)
-        parsed_datetime = upload.parse_filename(filename, '444444')
-        self.assertEqual(expected_date, parsed_datetime.date())
+        parsed_date = upload.parse_filename(filename, '444444')
+        self.assertEqual(expected_date, parsed_date)
 
     def test_incorrect_format_returns_none(self):
         filename = 'unrelated_file'
-        parsed_datetime = upload.parse_filename(filename, '444444')
-        self.assertEqual(None, parsed_datetime)
+        parsed_date = upload.parse_filename(filename, '444444')
+        self.assertEqual(None, parsed_date)
 
     def test_incorrect_account_code_returns_none(self):
         filename = 'Y01A.CARS.#D.555555.D091214'
-        parsed_datetime = upload.parse_filename(filename, '444444')
-        self.assertEqual(None, parsed_datetime)
+        parsed_date = upload.parse_filename(filename, '444444')
+        self.assertEqual(None, parsed_date)
 
     def test_parsing_date_from_full_path_succeeds(self):
         filename = '/random/Y01A.CARS.#D.444444.D091214'
         expected_date = date(2014, 12, 9)
-        parsed_datetime = upload.parse_filename(filename, '444444')
-        self.assertEqual(expected_date, parsed_datetime.date())
+        parsed_date = upload.parse_filename(filename, '444444')
+        self.assertEqual(expected_date, parsed_date)
 
 
 @mock.patch('mtp_transaction_uploader.upload.settings')
@@ -211,7 +211,7 @@ class FileDownloadTestCase(TestCase):
             date(2014, 12, 12),
             date(2014, 12, 13),
             date(2014, 12, 14),
-        ], [dt.date() for dt in new_dates])
+        ], [new_date for new_date in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D091214',
             '/Y01A.CARS.#D.444444.D101214',
@@ -236,7 +236,7 @@ class FileDownloadTestCase(TestCase):
             date(2014, 12, 9),
             date(2014, 12, 10),
             date(2014, 12, 11),
-        ], [dt.date() for dt in new_dates])
+        ], [new_date for new_date in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D091214',
             '/Y01A.CARS.#D.444444.D101214',
@@ -267,7 +267,7 @@ class FileDownloadTestCase(TestCase):
             date(2014, 12, 11),
             date(2014, 12, 12),
             date(2014, 12, 14),
-        ], [dt.date() for dt in new_dates])
+        ], [new_date for new_date in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D091214',
             '/Y01A.CARS.#D.444444.D101214',
@@ -291,14 +291,14 @@ class FileDownloadTestCase(TestCase):
         ]
 
         new_dates, new_filenames = self._download_new_files(
-            mock_connection_class, mock_settings, dirlist, datetime(2014, 12, 11)
+            mock_connection_class, mock_settings, dirlist, date(2014, 12, 11)
         )
 
         self.assertEqual([
             date(2014, 12, 12),
             date(2014, 12, 13),
             date(2014, 12, 14),
-        ], [dt.date() for dt in new_dates])
+        ], [new_date for new_date in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D121214',
             '/Y01A.CARS.#D.444444.D131214',
@@ -343,7 +343,7 @@ class FileDownloadTestCase(TestCase):
             date(2014, 12, 11),
             date(2014, 12, 12),
             date(2014, 12, 14),
-        ], [dt.date() for dt in new_dates])
+        ], [new_date for new_date in new_dates])
         self.assertEqual([
             '/Y01A.CARS.#D.444444.D091214',
             '/Y01A.CARS.#D.444444.D101214',
@@ -400,7 +400,7 @@ class RetrieveNewFilesTestCase(TestCase):
             '/Y01A.CARS.#D.444444.D131214',
             '/Y01A.CARS.#D.444444.D141214',
         ], new_filenames)
-        self.assertEqual(date(2014, 12, 14), new_last_date.date())
+        self.assertEqual(date(2014, 12, 14), new_last_date)
 
     @mock.patch('mtp_transaction_uploader.upload.Connection')
     @mock.patch('mtp_transaction_uploader.upload.settings')

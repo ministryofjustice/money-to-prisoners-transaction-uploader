@@ -6,6 +6,7 @@ import math
 import os
 import re
 import shutil
+import typing
 
 from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
@@ -38,7 +39,7 @@ SenderInformation = namedtuple(
 )
 
 
-def download_new_files(last_date):
+def download_new_files(last_date: typing.Optional[datetime.date]):
     new_dates = []
     new_filenames = []
     opts = CnOpts()
@@ -57,7 +58,7 @@ def download_new_files(last_date):
                                      % (filename, stat.st_size))
                         continue
 
-                    if last_date is None or date.date() > last_date.date():
+                    if last_date is None or date > last_date:
                         local_path = os.path.join(settings.DS_NEW_FILES_DIR,
                                                   filename)
                         new_filenames.append(local_path)
@@ -71,13 +72,13 @@ def download_new_files(last_date):
         return NewFiles([], [])
 
 
-def parse_filename(filename, account_code):
+def parse_filename(filename, account_code) -> typing.Optional[datetime.date]:
     file_pattern = re.compile(
         FILE_PATTERN_STR % {'code': account_code}, re.X
     )
     m = file_pattern.search(filename)
     if m:
-        return datetime.datetime.strptime(m.group('date'), DATE_FORMAT)
+        return datetime.datetime.strptime(m.group('date'), DATE_FORMAT).date()
     return None
 
 
@@ -93,7 +94,7 @@ def retrieve_data_services_files():
     response = conn.transactions.get(ordering='-received_at', limit=1)
     if response.get('results'):
         last_date = response['results'][0]['received_at'][:10]
-        last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
+        last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d').date()
 
     new_dates, new_filenames = download_new_files(last_date)
 
@@ -123,7 +124,7 @@ def upload_transactions_from_files(files):
                             (i + 1) * settings.UPLOAD_REQUEST_SIZE
                         ])
                     )
-                stmt_date = parse_filename(filename, settings.ACCOUNT_CODE).date()
+                stmt_date = parse_filename(filename, settings.ACCOUNT_CODE)
                 update_new_balance(transactions, stmt_date)
                 logger.info('Uploaded %d transactions from %s' % (transaction_count, filename))
                 successful_transaction_count += transaction_count
@@ -261,8 +262,9 @@ def parse_credit_reference(ref):
                 dob = dob.replace(year=dob.year - 100)
         except ValueError:
             return
+    dob = dob.date()
 
-    return ParsedReference(number.upper(), dob.date())
+    return ParsedReference(number.upper(), dob)
 
 
 def extract_sender_information(record):
@@ -324,7 +326,7 @@ def get_matching_batch_id_for_settlement(record):
             pass
 
 
-def update_new_balance(transactions, date):
+def update_new_balance(transactions, date: datetime.date):
     conn = get_authenticated_connection()
     response = conn.balances.get(limit=1, date__lt=date.isoformat())
     if response.get('results'):
