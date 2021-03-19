@@ -1,5 +1,5 @@
 from collections import namedtuple
-from datetime import date, datetime, time
+import datetime
 import itertools
 import logging
 import math
@@ -77,7 +77,7 @@ def parse_filename(filename, account_code):
     )
     m = file_pattern.search(filename)
     if m:
-        return datetime.strptime(m.group('date'), DATE_FORMAT)
+        return datetime.datetime.strptime(m.group('date'), DATE_FORMAT)
     return None
 
 
@@ -93,7 +93,7 @@ def retrieve_data_services_files():
     response = conn.transactions.get(ordering='-received_at', limit=1)
     if response.get('results'):
         last_date = response['results'][0]['received_at'][:10]
-        last_date = datetime.strptime(last_date, '%Y-%m-%d')
+        last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
 
     new_dates, new_filenames = download_new_files(last_date)
 
@@ -164,7 +164,7 @@ def get_transactions_from_file(data_services_file):
             continue
 
         sender_information = extract_sender_information(record)
-        received_at = datetime.combine(record.date, time(12, 0, 0, tzinfo=utc))
+        received_at = datetime.datetime.combine(record.date, datetime.time(12, 0, 0, tzinfo=utc))
         transaction = {
             'amount': record.amount,
             'sender_sort_code': sender_information.sort_code,
@@ -252,12 +252,12 @@ def parse_credit_reference(ref):
 
     date_str = '%s/%s/%s' % (day, month, year)
     try:
-        dob = datetime.strptime(date_str, '%d/%m/%Y')
+        dob = datetime.datetime.strptime(date_str, '%d/%m/%Y')
     except ValueError:
         try:
-            dob = datetime.strptime(date_str, '%d/%m/%y')
+            dob = datetime.datetime.strptime(date_str, '%d/%m/%y')
             # set correct century for 2 digit year
-            if dob.year > datetime.today().year - 10:
+            if dob.year > datetime.datetime.today().year - 10:
                 dob = dob.replace(year=dob.year - 100)
         except ValueError:
             return
@@ -309,9 +309,9 @@ def get_matching_batch_id_for_settlement(record):
     m = WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.match(record.transaction_description)
     if m:
         try:
-            batch_date = datetime.strptime(m.group(1), '%d%m').date()
+            batch_date = datetime.datetime.strptime(m.group(1), '%d%m').date()
 
-            today = date.today()
+            today = datetime.date.today()
             batch_date = batch_date.replace(year=today.year)
             if batch_date > today:
                 batch_date = batch_date.replace(year=today.year - 1)
