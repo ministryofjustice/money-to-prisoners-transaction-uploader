@@ -309,21 +309,28 @@ def extract_sender_information(record):
 
 def get_matching_batch_id_for_settlement(record):
     m = WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.match(record.transaction_description)
-    if m:
-        try:
-            batch_date = datetime.datetime.strptime(m.group(1), '%d%m').date()
+    if not m:
+        # not a worldpay settlement
+        return
 
-            today = datetime.date.today()
-            batch_date = batch_date.replace(year=today.year)
-            if batch_date > today:
-                batch_date = batch_date.replace(year=today.year - 1)
+    try:
+        batch_date = datetime.datetime.strptime(m.group(1), '%d%m').date()
+    except ValueError:
+        # settlement date cannot be parsed
+        return
 
-            conn = get_authenticated_connection()
-            response = conn.batches.get(date=batch_date.isoformat())
-            if response.get('results'):
-                return response['results'][0]['id']
-        except ValueError:
-            pass
+    today = datetime.date.today()
+
+    # parse 4-digit date
+    batch_date = batch_date.replace(year=today.year)
+    if batch_date > today:
+        batch_date = batch_date.replace(year=today.year - 1)
+
+    # get batch id for date if found
+    conn = get_authenticated_connection()
+    response = conn.batches.get(date=batch_date.isoformat())
+    if response.get('results'):
+        return response['results'][0]['id']
 
 
 def update_new_balance(transactions, date: datetime.date):
