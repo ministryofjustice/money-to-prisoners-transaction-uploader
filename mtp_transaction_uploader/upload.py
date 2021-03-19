@@ -319,12 +319,12 @@ def get_matching_batch_id_for_settlement(record):
         # settlement date cannot be parsed
         return
 
-    today = datetime.date.today()
+    relative_date = record.date.date()
 
     # parse 4-digit date
-    batch_date = batch_date.replace(year=today.year)
-    if batch_date > today:
-        batch_date = batch_date.replace(year=today.year - 1)
+    batch_date = batch_date.replace(year=relative_date.year)
+    if batch_date > relative_date:
+        batch_date = batch_date.replace(year=relative_date.year - 1)
 
     # get batch id for date if found
     conn = get_authenticated_connection()

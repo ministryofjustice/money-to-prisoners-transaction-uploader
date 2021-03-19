@@ -596,6 +596,7 @@ class TransactionsFromFileTestCase(TestCase):
     @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
     def test_marks_administrative_transactions(self, mock_get_conn):
         with open('tests/data/testfile_administrative_credits') as f:
+            # records are from 36th date of 2004, i.e. 2004-02-05 (see last 5 digits in each record)
             data_services_file = parse(f)
 
         conn = mock_get_conn()
@@ -615,6 +616,9 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(transactions[2]['category'], 'credit')
         self.assertEqual(transactions[2]['source'], 'administrative')
         self.assertEqual(transactions[2]['batch'], 10)
+
+        # settlement is for ?-09-22 (assumed to be nearest date in the past)
+        conn.batches.get.assert_called_with(date='2003-09-22')
 
     @mock.patch('mtp_transaction_uploader.upload.settings')
     def test_marking_all_credit_transactions_as_unidentified(self, mock_settings):
@@ -788,7 +792,9 @@ class GetMatchingBatchIdForSettlementTestCase(TestCase):
         conn.batches.get.assert_called_with(date=expected_date.isoformat())
 
     def test_get_matching_batch(self, mock_get_conn):
-        expected_date = date.today().replace(day=1, month=1)
+        # record is for 36th date of 2004, i.e. 2004-02-05 (last 5 digits in record)
+        # settlement is for ?-01-01 (assumed to be nearest date in the past)
+        expected_date = date(2004, 1, 1)
         record = DataRecord(
             '1234566717531509324543278990056000000000009802'
             'TT- GGGGGGGG -0101WORLDPAY                    '
@@ -797,10 +803,9 @@ class GetMatchingBatchIdForSettlementTestCase(TestCase):
         self._test_successful_match(mock_get_conn, record, expected_date)
 
     def test_get_matching_batch_from_previous_year(self, mock_get_conn):
-        expected_date = date.today()
-        expected_date = expected_date.replace(
-            day=31, month=12, year=expected_date.year - 1
-        )
+        # record is for 36th date of 2004, i.e. 2004-02-05 (last 5 digits in record)
+        # settlement is for ?-12-31 (assumed to be nearest date in the past)
+        expected_date = date(2003, 12, 31)
         record = DataRecord(
             '1234566717531509324543278990056000000000009802'
             'TT- GGGGGGGG -3112WORLDPAY                    '
@@ -809,6 +814,8 @@ class GetMatchingBatchIdForSettlementTestCase(TestCase):
         self._test_successful_match(mock_get_conn, record, expected_date)
 
     def test_invalid_date_is_ignored(self, mock_get_conn):
+        # record is for 36th date of 2004, i.e. 2004-02-05 (last 5 digits in record)
+        # but settlement date cannot be parsed
         record = DataRecord(
             '1234566717531509324543278990056000000000009802'
             'TT- GGGGGGGG -9934WORLDPAY                    '
