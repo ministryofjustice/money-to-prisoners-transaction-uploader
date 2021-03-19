@@ -313,24 +313,46 @@ def get_matching_batch_id_for_settlement(record):
         # not a worldpay settlement
         return
 
+    relative_date = record.date.date()
+    batch_date = m.group('date')
     try:
-        batch_date = datetime.datetime.strptime(m.group(1), '%d%m').date()
+        if len(batch_date) == 4:
+            batch_date = parse_4_digit_date(batch_date, relative_date)
+        elif len(batch_date) == 2:
+            batch_date = parse_2_digit_date(batch_date, relative_date)
+        else:
+            # no date provided so cannot match to a batch
+            raise ValueError
     except ValueError:
         # settlement date cannot be parsed
         return
-
-    relative_date = record.date.date()
-
-    # parse 4-digit date
-    batch_date = batch_date.replace(year=relative_date.year)
-    if batch_date > relative_date:
-        batch_date = batch_date.replace(year=relative_date.year - 1)
 
     # get batch id for date if found
     conn = get_authenticated_connection()
     response = conn.batches.get(date=batch_date.isoformat())
     if response.get('results'):
         return response['results'][0]['id']
+
+
+def parse_2_digit_date(date_str, relative_date: datetime.date) -> datetime.date:
+    batch_date = datetime.datetime.strptime(date_str, '%d').date()
+    batch_date = batch_date.replace(year=relative_date.year, month=relative_date.month)
+    if batch_date <= relative_date:
+        return batch_date
+    # batch cannot be in the future so go back 1 month
+    if batch_date.month == 1:
+        return batch_date.replace(year=relative_date.year - 1, month=12)
+    else:
+        return batch_date.replace(month=relative_date.month - 1)
+
+
+def parse_4_digit_date(date_str, relative_date: datetime.date) -> datetime.date:
+    batch_date = datetime.datetime.strptime(date_str, '%d%m').date()
+    batch_date = batch_date.replace(year=relative_date.year)
+    if batch_date <= relative_date:
+        return batch_date
+    # batch cannot be in the future so go back 1 year
+    return batch_date.replace(year=relative_date.year - 1)
 
 
 def update_new_balance(transactions, date: datetime.date):

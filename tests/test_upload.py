@@ -620,6 +620,45 @@ class TransactionsFromFileTestCase(TestCase):
         # settlement is for ?-09-22 (assumed to be nearest date in the past)
         conn.batches.get.assert_called_with(date='2003-09-22')
 
+    @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
+    def testfile_settlement_credits(self, mock_get_conn):
+        with open('tests/data/testfile_settlement_credits') as f:
+            # records are from 36th date of 2004, i.e. 2004-02-05 (see last 5 digits in each record)
+            data_services_file = parse(f)
+
+        conn = mock_get_conn()
+        conn.batches.get.return_value = {
+            'count': 1,
+            'results': [{'id': 10}]
+        }
+
+        transactions = upload.get_transactions_from_file(data_services_file)
+
+        # test file has 3 settlement transactions which are all "administrative" credits
+        self.assertEqual(len(transactions), 3)
+        self.assertTrue(all(
+            transaction['category'] == 'credit' and transaction['source'] == 'administrative'
+            for transaction in transactions
+        ))
+
+        # one settlement does not have a date that can be parsed so is not matched to a batch
+        self.assertNotIn('batch', transactions[0])
+
+        # two settlements have a date that can be parsed and matched to a batch
+        self.assertEqual(len(conn.batches.get.call_args_list), 2)
+        # first settlement is for ?-09-22 (assumed to be nearest date in the past)
+        self.assertEqual(transactions[1]['batch'], 10)
+        self.assertEqual(
+            conn.batches.get.call_args_list[0],
+            ((), {'date': '2003-09-22'})
+        )
+        # second settlement is for ?-?-21 (assumed to be nearest date in the past)
+        self.assertEqual(transactions[2]['batch'], 10)
+        self.assertEqual(
+            conn.batches.get.call_args_list[1],
+            ((), {'date': '2004-01-21'})
+        )
+
     @mock.patch('mtp_transaction_uploader.upload.settings')
     def test_marking_all_credit_transactions_as_unidentified(self, mock_settings):
         setup_settings(mock_settings, mark_transactions_as_unidentified=True)
@@ -777,6 +816,75 @@ class UpdateNewBalanceTestCase(TestCase):
         })
 
 
+class SettlementDateParsingTestCase(TestCase):
+    def test_parsable_settlement_2_digit_dates(self):
+        values = [
+            ('31', date(2021, 1, 31), date(2021, 1, 31)),
+            ('30', date(2021, 1, 31), date(2021, 1, 30)),
+            ('29', date(2021, 1, 31), date(2021, 1, 29)),
+            ('28', date(2021, 1, 31), date(2021, 1, 28)),
+            ('01', date(2021, 1, 31), date(2021, 1, 1)),
+
+            ('27', date(2021, 2, 28), date(2021, 2, 27)),
+            ('27', date(2021, 2, 27), date(2021, 2, 27)),
+            ('27', date(2021, 2, 26), date(2021, 1, 27)),
+            ('27', date(2021, 2, 25), date(2021, 1, 27)),
+
+            ('02', date(2021, 1, 2), date(2021, 1, 2)),
+            ('01', date(2021, 1, 2), date(2021, 1, 1)),
+            ('31', date(2021, 1, 2), date(2020, 12, 31)),
+            ('30', date(2021, 1, 2), date(2020, 12, 30)),
+        ]
+        for date_str, relative_date, expected_date in values:
+            resulting_date = upload.parse_2_digit_date(date_str, relative_date)
+            self.assertEqual(
+                resulting_date, expected_date,
+                msg=f'{date_str} relative to {relative_date} should parse to {expected_date}'
+            )
+
+    def test_parsable_settlement_4_digit_dates(self):
+        values = [
+            ('3101', date(2021, 1, 31), date(2021, 1, 31)),
+            ('3001', date(2021, 1, 31), date(2021, 1, 30)),
+            ('0101', date(2021, 1, 31), date(2021, 1, 1)),
+            ('0202', date(2021, 1, 31), date(2020, 2, 2)),
+            ('0202', date(2021, 6, 30), date(2021, 2, 2)),
+            ('3112', date(2021, 6, 30), date(2020, 12, 31)),
+        ]
+        for date_str, relative_date, expected_date in values:
+            resulting_date = upload.parse_4_digit_date(date_str, relative_date)
+            self.assertEqual(
+                resulting_date, expected_date,
+                msg=f'{date_str} relative to {relative_date} should parse to {expected_date}'
+            )
+
+    def test_unparsable_settlement_2_digit_dates(self):
+        values = [
+            # overflows day of previous month
+            ('30', date(2021, 3, 1)),
+            ('31', date(2021, 5, 1)),
+            # not a date
+            ('33', date(2021, 2, 1)),
+            ('xx', date(2021, 2, 1)),
+        ]
+        for date_str, relative_date in values:
+            with self.assertRaises(ValueError, msg=f'{date_str} relative to {relative_date} should not parse'):
+                upload.parse_2_digit_date(date_str, relative_date)
+
+    def test_unparsable_settlement_4_digit_dates(self):
+        values = [
+            # overflows day of month
+            ('3002', date(2021, 3, 1)),
+            ('3104', date(2021, 5, 1)),
+            # not a date
+            ('3301', date(2021, 2, 1)),
+            ('ddmm', date(2021, 2, 1)),
+        ]
+        for date_str, relative_date in values:
+            with self.assertRaises(ValueError, msg=f'{date_str} relative to {relative_date} should not parse'):
+                upload.parse_4_digit_date(date_str, relative_date)
+
+
 @mock.patch('mtp_transaction_uploader.upload.get_authenticated_connection')
 class GetMatchingBatchIdForSettlementTestCase(TestCase):
 
@@ -802,6 +910,17 @@ class GetMatchingBatchIdForSettlementTestCase(TestCase):
         )
         self._test_successful_match(mock_get_conn, record, expected_date)
 
+    def test_get_matching_batch_for_2_digit_date(self, mock_get_conn):
+        # record is for 36th date of 2004, i.e. 2004-02-05 (last 5 digits in record)
+        # settlement is for ?-?-01 (assumed to be nearest date in the past)
+        expected_date = date(2004, 2, 1)
+        record = DataRecord(
+            '1234566717531509324543278990056000000000009802'
+            'TT- GGGGGGGG -01  WORLDPAY                    '
+            '         04036                      '
+        )
+        self._test_successful_match(mock_get_conn, record, expected_date)
+
     def test_get_matching_batch_from_previous_year(self, mock_get_conn):
         # record is for 36th date of 2004, i.e. 2004-02-05 (last 5 digits in record)
         # settlement is for ?-12-31 (assumed to be nearest date in the past)
@@ -810,6 +929,17 @@ class GetMatchingBatchIdForSettlementTestCase(TestCase):
             '1234566717531509324543278990056000000000009802'
             'TT- GGGGGGGG -3112WORLDPAY                    '
             '         04036                      '
+        )
+        self._test_successful_match(mock_get_conn, record, expected_date)
+
+    def test_get_matching_batch_from_previous_year_for_2_digit_date(self, mock_get_conn):
+        # record is for 3rd date of 2004, i.e. 2004-01-03 (last 5 digits in record)
+        # settlement is for ?-?-31 (assumed to be nearest date in the past)
+        expected_date = date(2003, 12, 31)
+        record = DataRecord(
+            '1234566717531509324543278990056000000000009802'
+            'TT- GGGGGGGG -31  WORLDPAY                    '
+            '         04003                      '
         )
         self._test_successful_match(mock_get_conn, record, expected_date)
 
