@@ -1,11 +1,12 @@
 from collections import namedtuple
-from datetime import date, datetime, time
+import datetime
 import itertools
 import logging
 import math
 import os
 import re
 import shutil
+import typing
 
 from bankline_parser.data_services import parse
 from bankline_parser.data_services.enums import TransactionCode
@@ -38,7 +39,7 @@ SenderInformation = namedtuple(
 )
 
 
-def download_new_files(last_date):
+def download_new_files(last_date: typing.Optional[datetime.date]):
     new_dates = []
     new_filenames = []
     opts = CnOpts()
@@ -57,7 +58,7 @@ def download_new_files(last_date):
                                      % (filename, stat.st_size))
                         continue
 
-                    if last_date is None or date.date() > last_date.date():
+                    if last_date is None or date > last_date:
                         local_path = os.path.join(settings.DS_NEW_FILES_DIR,
                                                   filename)
                         new_filenames.append(local_path)
@@ -71,13 +72,13 @@ def download_new_files(last_date):
         return NewFiles([], [])
 
 
-def parse_filename(filename, account_code):
+def parse_filename(filename, account_code) -> typing.Optional[datetime.date]:
     file_pattern = re.compile(
         FILE_PATTERN_STR % {'code': account_code}, re.X
     )
     m = file_pattern.search(filename)
     if m:
-        return datetime.strptime(m.group('date'), DATE_FORMAT)
+        return datetime.datetime.strptime(m.group('date'), DATE_FORMAT).date()
     return None
 
 
@@ -93,7 +94,7 @@ def retrieve_data_services_files():
     response = conn.transactions.get(ordering='-received_at', limit=1)
     if response.get('results'):
         last_date = response['results'][0]['received_at'][:10]
-        last_date = datetime.strptime(last_date, '%Y-%m-%d')
+        last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d').date()
 
     new_dates, new_filenames = download_new_files(last_date)
 
@@ -123,7 +124,7 @@ def upload_transactions_from_files(files):
                             (i + 1) * settings.UPLOAD_REQUEST_SIZE
                         ])
                     )
-                stmt_date = parse_filename(filename, settings.ACCOUNT_CODE).date()
+                stmt_date = parse_filename(filename, settings.ACCOUNT_CODE)
                 update_new_balance(transactions, stmt_date)
                 logger.info('Uploaded %d transactions from %s' % (transaction_count, filename))
                 successful_transaction_count += transaction_count
@@ -164,7 +165,7 @@ def get_transactions_from_file(data_services_file):
             continue
 
         sender_information = extract_sender_information(record)
-        received_at = datetime.combine(record.date, time(12, 0, 0, tzinfo=utc))
+        received_at = datetime.datetime.combine(record.date, datetime.time(12, 0, 0, tzinfo=utc))
         transaction = {
             'amount': record.amount,
             'sender_sort_code': sender_information.sort_code,
@@ -252,17 +253,18 @@ def parse_credit_reference(ref):
 
     date_str = '%s/%s/%s' % (day, month, year)
     try:
-        dob = datetime.strptime(date_str, '%d/%m/%Y')
+        dob = datetime.datetime.strptime(date_str, '%d/%m/%Y')
     except ValueError:
         try:
-            dob = datetime.strptime(date_str, '%d/%m/%y')
+            dob = datetime.datetime.strptime(date_str, '%d/%m/%y')
             # set correct century for 2 digit year
-            if dob.year > datetime.today().year - 10:
+            if dob.year > datetime.datetime.today().year - 10:
                 dob = dob.replace(year=dob.year - 100)
         except ValueError:
             return
+    dob = dob.date()
 
-    return ParsedReference(number.upper(), dob.date())
+    return ParsedReference(number.upper(), dob)
 
 
 def extract_sender_information(record):
@@ -307,24 +309,53 @@ def extract_sender_information(record):
 
 def get_matching_batch_id_for_settlement(record):
     m = WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.match(record.transaction_description)
-    if m:
-        try:
-            batch_date = datetime.strptime(m.group(1), '%d%m').date()
+    if not m:
+        # not a worldpay settlement
+        return
 
-            today = date.today()
-            batch_date = batch_date.replace(year=today.year)
-            if batch_date > today:
-                batch_date = batch_date.replace(year=today.year - 1)
+    relative_date = record.date.date()
+    batch_date = m.group('date')
+    try:
+        if len(batch_date) == 4:
+            batch_date = parse_4_digit_date(batch_date, relative_date)
+        elif len(batch_date) == 2:
+            batch_date = parse_2_digit_date(batch_date, relative_date)
+        else:
+            # no date provided so cannot match to a batch
+            raise ValueError
+    except ValueError:
+        # settlement date cannot be parsed
+        return
 
-            conn = get_authenticated_connection()
-            response = conn.batches.get(date=batch_date.isoformat())
-            if response.get('results'):
-                return response['results'][0]['id']
-        except ValueError:
-            pass
+    # get batch id for date if found
+    conn = get_authenticated_connection()
+    response = conn.batches.get(date=batch_date.isoformat())
+    if response.get('results'):
+        return response['results'][0]['id']
 
 
-def update_new_balance(transactions, date):
+def parse_2_digit_date(date_str, relative_date: datetime.date) -> datetime.date:
+    batch_date = datetime.datetime.strptime(date_str, '%d').date()
+    batch_date = batch_date.replace(year=relative_date.year, month=relative_date.month)
+    if batch_date <= relative_date:
+        return batch_date
+    # batch cannot be in the future so go back 1 month
+    if batch_date.month == 1:
+        return batch_date.replace(year=relative_date.year - 1, month=12)
+    else:
+        return batch_date.replace(month=relative_date.month - 1)
+
+
+def parse_4_digit_date(date_str, relative_date: datetime.date) -> datetime.date:
+    batch_date = datetime.datetime.strptime(date_str, '%d%m').date()
+    batch_date = batch_date.replace(year=relative_date.year)
+    if batch_date <= relative_date:
+        return batch_date
+    # batch cannot be in the future so go back 1 year
+    return batch_date.replace(year=relative_date.year - 1)
+
+
+def update_new_balance(transactions, date: datetime.date):
     conn = get_authenticated_connection()
     response = conn.balances.get(limit=1, date__lt=date.isoformat())
     if response.get('results'):

@@ -42,10 +42,12 @@ FILE_PATTERN_STR = (
     """
 )
 
-
 NOMS_ACCOUNT_NUMBER_PATTERN = re.compile(settings.NOMS_AGENCY_ACCOUNT_NUMBER)
 NOMS_SORT_CODE_PATTERN = re.compile(settings.NOMS_AGENCY_SORT_CODE)
+
 WORLDPAY_SETTLEMENT_REFERENCE_PATTERN = re.compile(settings.WORLDPAY_SETTLEMENT_REFERENCE)
+assert WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.groupindex.get('date'), \
+    'WORLDPAY_SETTLEMENT_REFERENCE needs a capturing group called "date"'
 
 
 class PaymentIdentifier:
