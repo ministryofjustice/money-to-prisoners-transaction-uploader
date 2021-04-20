@@ -54,8 +54,7 @@ def download_new_files(last_date: typing.Optional[datetime.date]):
                 if date:
                     stat = conn.stat(filename)
                     if stat.st_size > SIZE_LIMIT_BYTES:
-                        logger.error('%s is too large (%s), download skipped.'
-                                     % (filename, stat.st_size))
+                        logger.error('%s is too large (%s), download skipped.', filename, stat.st_size)
                         continue
 
                     if last_date is None or date > last_date:
@@ -110,7 +109,7 @@ def upload_transactions_from_files(files):
     conn = get_authenticated_connection()
     successful_transaction_count = 0
     for filename in files:
-        logger.info('Processing %s...' % filename)
+        logger.info('Processing %s...', filename)
         with open(filename) as f:
             data_services_file = parse(f)
         transactions = get_transactions_from_file(data_services_file)
@@ -126,14 +125,15 @@ def upload_transactions_from_files(files):
                     )
                 stmt_date = parse_filename(filename, settings.ACCOUNT_CODE)
                 update_new_balance(transactions, stmt_date)
-                logger.info('Uploaded %d transactions from %s' % (transaction_count, filename))
+                logger.info('Uploaded %d transactions from %s', transaction_count, filename)
                 successful_transaction_count += transaction_count
             except SlumberHttpBaseException as e:
-                logger.error('Failed to upload %d transactions from %s.\n%s' % (
+                logger.error(
+                    'Failed to upload %d transactions from %s.\n%s',
                     transaction_count,
                     filename,
                     getattr(e, 'content', e)
-                ))
+                )
     return successful_transaction_count
 
 
@@ -150,7 +150,7 @@ def clean_request_data(data):
 
 def get_transactions_from_file(data_services_file):
     if not data_services_file.is_valid():
-        logger.error('Errors: %s' % data_services_file.errors)
+        logger.error('Errors: %s', data_services_file.errors)
         return None
 
     filtered_records = filter_relevant_records_from_all_accounts(data_services_file.accounts)
@@ -377,21 +377,27 @@ def main():
     last_date, files = retrieve_data_services_files()
     file_count = len(files)
     if file_count == 0:
-        logger.info('No new files available to upload', extra={
+        logger.info(
+            'No new files available to upload',
+            extra={
+                'elk_fields': {
+                    '@fields.file_count': file_count
+                }
+            }
+        )
+        return
+
+    logger.info(
+        'Uploading transactions from new files: %s', ', '.join(files),
+        extra={
             'elk_fields': {
                 '@fields.file_count': file_count
             }
-        })
-        return
-
-    logger.info('Uploading transactions from new files: ' + ', '.join(files), extra={
-        'elk_fields': {
-            '@fields.file_count': file_count
         }
-    })
+    )
     transaction_count = upload_transactions_from_files(files)
     logger.info(
-        'Upload of %d transactions complete' % transaction_count,
+        'Upload of %d transactions complete', transaction_count,
         extra={
             'elk_fields': {
                 '@fields.transaction_count': transaction_count

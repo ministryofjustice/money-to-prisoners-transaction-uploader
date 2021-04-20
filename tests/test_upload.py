@@ -735,10 +735,14 @@ class TransactionsFromFileTestCase(TestCase):
 
         transactions = upload.get_transactions_from_file(data_services_file)
         mock_logger.error.assert_called_with(
-            "Errors: {'account 0': ['Monetary total of debit items does not "
-            "match expected: counted 288615, expected 288610', "
-            "'Monetary total of credit items does not match expected: "
-            "counted 18741, expected 18732']}")
+            'Errors: %s',
+            {
+                'account 0': [
+                    'Monetary total of debit items does not match expected: counted 288615, expected 288610',
+                    'Monetary total of credit items does not match expected: counted 18741, expected 18732',
+                ]
+            }
+        )
 
         self.assertEqual(transactions, None)
 
