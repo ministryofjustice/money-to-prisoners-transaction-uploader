@@ -9,7 +9,7 @@ This app does not have a web interface. It's run as a cron-like jon.
 Requirements
 ------------
 
-- Python 3.6+
+- Python 3.8+
 
 Usage
 -----
