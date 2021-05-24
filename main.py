@@ -50,7 +50,8 @@ def setup_monitoring():
             dsn=settings.SENTRY_DSN,
             environment=settings.ENVIRONMENT,
             release=settings.APP_GIT_COMMIT,
-            send_default_pii=False
+            send_default_pii=False,
+            traces_sample_rate=1.0,
         )
     logging.config.dictConfig(logging_conf)
     logger = logging.getLogger('mtp')
