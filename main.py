@@ -51,6 +51,7 @@ def setup_monitoring():
             environment=settings.ENVIRONMENT,
             release=settings.APP_GIT_COMMIT,
             send_default_pii=False,
+            request_bodies='never',
             traces_sample_rate=1.0,
         )
         sentry_enabled = True
