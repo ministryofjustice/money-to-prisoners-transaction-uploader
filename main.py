@@ -3,6 +3,8 @@ import logging.config
 import os
 import sys
 
+import sentry_sdk
+
 from mtp_transaction_uploader import settings
 from mtp_transaction_uploader.upload import main as transaction_uploader
 
@@ -42,25 +44,25 @@ def setup_monitoring():
             },
         },
     }
-    sentry = None
+    sentry_enabled = False
     if os.environ.get('SENTRY_DSN'):
-        import sentry_sdk
-
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             environment=settings.ENVIRONMENT,
             release=settings.APP_GIT_COMMIT,
             send_default_pii=False,
+            request_bodies='never',
             traces_sample_rate=1.0,
         )
+        sentry_enabled = True
     logging.config.dictConfig(logging_conf)
     logger = logging.getLogger('mtp')
 
-    return logger, sentry
+    return logger, sentry_enabled
 
 
 def main():
-    logger, sentry = setup_monitoring()
+    logger, sentry_enabled = setup_monitoring()
 
     if settings.UPLOADER_DISABLED:
         logger.info('Transaction uploader is disabled')
@@ -82,9 +84,9 @@ def main():
     try:
         # run the transaction uploader
         transaction_uploader()
-    except:  # noqa
-        if sentry:
-            sentry.captureException()
+    except Exception as e:
+        if sentry_enabled:
+            sentry_sdk.capture_exception(e)
         else:
             logger.exception('Unhandled error')
         sys.exit(2)
