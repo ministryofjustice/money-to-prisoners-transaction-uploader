@@ -4,7 +4,7 @@ Transaction Uploader
 Reads Money to Prisoners (MTP) bank account to facilitate reconciliation.
 Part of the `Prisoner Money suite of apps`_.
 
-This app does not have a web interface. It's run as a cron-like jon.
+This app does not have a web interface. It's run as a cron-like job.
 
 Requirements
 ------------
