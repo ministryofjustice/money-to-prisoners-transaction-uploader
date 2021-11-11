@@ -2,5 +2,5 @@
 
 money-to-prisoners-common~=13.3.0
 
-pysftp==0.2.9
-bankline-direct-parser==0.4
+pysftp~=0.2.9
+bankline-direct-parser~=0.4.0
