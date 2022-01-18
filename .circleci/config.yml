@@ -102,7 +102,7 @@ jobs:
               IMAGE=${registry}:${tag}
               kubectl patch configmap app-versions --patch "{\"data\": {\"${app}\": \"${version}\"}}"
               # NB: patching operations assume that ONLY ONE container exists
-              kubectl patch tzcronjob ${app} --type json --patch "[{\"op\": \"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\": \"${IMAGE}\"}]"
+              kubectl patch cronjob ${app} --type json --patch "[{\"op\": \"replace\", \"path\": \"/spec/jobTemplate/spec/template/spec/containers/0/image\", \"value\": \"${IMAGE}\"}]"
             else
               echo "Not deploying to test"
             fi
