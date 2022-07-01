@@ -1,6 +1,6 @@
 # Dependencies needed for all environments
 
-money-to-prisoners-common~=13.5.0
+money-to-prisoners-common~=13.6.0
 
 pysftp~=0.2.9
 bankline-direct-parser~=0.5.0
