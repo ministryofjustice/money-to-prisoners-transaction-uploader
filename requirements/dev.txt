@@ -4,4 +4,4 @@ money-to-prisoners-common[testing]~=13.13.0
 
 -r base.txt
 
-nose~=1.3
+pytest~=7.2
