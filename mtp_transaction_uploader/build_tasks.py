@@ -25,7 +25,7 @@ def test(context: Context, functional_tests=False):
             'RUN_FUNCTIONAL_TESTS': '1',
             'OAUTHLIB_INSECURE_TRANSPORT': '1',
         })
-    return context.shell('nosetests', environment=environment)
+    return context.shell('pytest', '--capture', 'no', '--verbose', '--junit-xml', 'junit.xml', environment=environment)
 
 
 @tasks.register()
@@ -33,7 +33,7 @@ def clean(context: Context, delete_dependencies: bool = False):
     """
     Deletes build outputs
     """
-    paths = ['nosetests.xml']
+    paths = ['junit.xml']
     context.shell('rm -rf %s' % paths_for_shell(paths))
     context.shell('find %s -name "*.pyc" -or -name __pycache__ -delete' % context.app.django_app_name)
 

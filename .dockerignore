@@ -16,4 +16,4 @@ venv/
 
 # testing
 .coverage
-nosetests.xml
+junit.xml
