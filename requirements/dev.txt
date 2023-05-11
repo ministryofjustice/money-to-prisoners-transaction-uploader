@@ -4,4 +4,4 @@ money-to-prisoners-common[testing]~=14.2.0
 
 -r base.txt
 
-pytest~=7.2
+pytest~=7.3
