@@ -176,7 +176,7 @@ def get_transactions_from_file(data_services_file):
             'sender_name': record.transaction_description,
             'reference': record.reference_number,
             'received_at': received_at.isoformat(),
-            'processor_type_code': record.transaction_code.value
+            'processor_type_code': record.transaction_code.value,
         }
         # payment credits
         if ((record.transaction_code == TransactionCode.credit_bacs_credit or
@@ -298,12 +298,10 @@ def extract_sender_information(record):
 
     return SenderInformation(
         sort_code, account_number, roll_number, anonymous, incomplete_sender_info,
-        any([
-            identifier.matches(
-                account_number, sort_code, record.transaction_description, record.reference_number
-            )
+        any(
+            identifier.matches(account_number, sort_code, record.transaction_description, record.reference_number)
             for identifier in ADMINISTRATIVE_IDENTIFIERS
-        ])
+        )
     )
 
 
@@ -369,8 +367,10 @@ def update_new_balance(transactions, date: datetime.date):
         elif t['category'] == 'debit':
             balance -= t['amount']
 
-    conn.balances.post({'date': date.isoformat(),
-                        'closing_balance': balance})
+    conn.balances.post({
+        'date': date.isoformat(),
+        'closing_balance': balance,
+    })
 
 
 def main():
@@ -381,9 +381,9 @@ def main():
             'No new files available to upload',
             extra={
                 'elk_fields': {
-                    '@fields.file_count': file_count
-                }
-            }
+                    '@fields.file_count': file_count,
+                },
+            },
         )
         return
 
@@ -391,8 +391,8 @@ def main():
         'Uploading transactions from new files: %s', ', '.join(files),
         extra={
             'elk_fields': {
-                '@fields.file_count': file_count
-            }
+                '@fields.file_count': file_count,
+            },
         }
     )
     transaction_count = upload_transactions_from_files(files)
@@ -400,7 +400,7 @@ def main():
         'Upload of %d transactions complete', transaction_count,
         extra={
             'elk_fields': {
-                '@fields.transaction_count': transaction_count
-            }
+                '@fields.transaction_count': transaction_count,
+            },
         }
     )

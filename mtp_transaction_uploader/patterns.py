@@ -78,12 +78,12 @@ ADMINISTRATIVE_IDENTIFIERS = [
         NOMS_ACCOUNT_NUMBER_PATTERN,
         NOMS_SORT_CODE_PATTERN,
         None,
-        None
+        None,
     ),
     PaymentIdentifier(
         None,
         None,
         WORLDPAY_SETTLEMENT_REFERENCE_PATTERN,
-        None
+        None,
     ),
 ]
