@@ -306,7 +306,8 @@ def extract_sender_information(record):
 
 
 def get_matching_batch_id_for_settlement(record):
-    m = WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.match(record.transaction_description)
+    m = WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.match(record.reference_number) or \
+        WORLDPAY_SETTLEMENT_REFERENCE_PATTERN.match(record.transaction_description)
     if not m:
         # not a worldpay settlement
         return

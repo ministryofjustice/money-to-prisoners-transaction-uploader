@@ -634,18 +634,19 @@ class TransactionsFromFileTestCase(TestCase):
 
         transactions = upload.get_transactions_from_file(data_services_file)
 
-        # test file has 3 settlement transactions which are all "administrative" credits
-        self.assertEqual(len(transactions), 3)
+        # test file has 4 settlement transactions which are all "administrative" credits
+        self.assertEqual(len(transactions), 4)
         self.assertTrue(all(
             transaction['category'] == 'credit' and transaction['source'] == 'administrative'
             for transaction in transactions
         ))
 
-        # one settlement does not have a date that can be parsed so is not matched to a batch
+        # 1 settlement does not have a date that can be parsed so is not matched to a batch
         self.assertNotIn('batch', transactions[0])
 
-        # two settlements have a date that can be parsed and matched to a batch
-        self.assertEqual(len(conn.batches.get.call_args_list), 2)
+        # 3 settlements have a date that can be parsed and matched to a batch
+        self.assertEqual(len(conn.batches.get.call_args_list), 3)
+
         # first settlement is for ?-09-22 (assumed to be nearest date in the past)
         self.assertEqual(transactions[1]['batch'], 10)
         self.assertEqual(
@@ -657,6 +658,12 @@ class TransactionsFromFileTestCase(TestCase):
         self.assertEqual(
             conn.batches.get.call_args_list[1],
             ((), {'date': '2004-01-21'})
+        )
+        # third settlement is for ?-09-23 (assumed to be nearest date in the past)
+        self.assertEqual(transactions[3]['batch'], 10)
+        self.assertEqual(
+            conn.batches.get.call_args_list[2],
+            ((), {'date': '2003-09-23'})
         )
 
     @mock.patch('mtp_transaction_uploader.upload.settings')

@@ -83,6 +83,12 @@ ADMINISTRATIVE_IDENTIFIERS = [
     PaymentIdentifier(
         None,
         None,
+        None,
+        WORLDPAY_SETTLEMENT_REFERENCE_PATTERN,
+    ),
+    PaymentIdentifier(
+        None,
+        None,
         WORLDPAY_SETTLEMENT_REFERENCE_PATTERN,
         None,
     ),
