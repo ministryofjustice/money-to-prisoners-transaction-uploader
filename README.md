@@ -7,7 +7,7 @@ This app does not have a web interface. It’s run as a cron-like job.
 
 ## Requirements
 
-- Unix-like platform with Python 3.10
+- Unix-like platform with Python 3.12
 
 ## Usage
 
