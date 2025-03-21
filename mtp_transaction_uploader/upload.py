@@ -1,5 +1,6 @@
 from collections import namedtuple
 import datetime
+from datetime import timezone
 import itertools
 import logging
 import math
@@ -14,7 +15,6 @@ from mtp_common.bank_accounts import (
     is_correspondence_account, roll_number_required, roll_number_valid_for_account
 )
 from pysftp import Connection, CnOpts
-from pytz import utc
 from slumber.exceptions import SlumberHttpBaseException
 
 from mtp_transaction_uploader import settings
@@ -165,7 +165,7 @@ def get_transactions_from_file(data_services_file):
             continue
 
         sender_information = extract_sender_information(record)
-        received_at = datetime.datetime.combine(record.date, datetime.time(12, 0, 0, tzinfo=utc))
+        received_at = datetime.datetime.combine(record.date, datetime.time(12, 0, 0, tzinfo=timezone.utc))
         transaction = {
             'amount': record.amount,
             'sender_sort_code': sender_information.sort_code,
