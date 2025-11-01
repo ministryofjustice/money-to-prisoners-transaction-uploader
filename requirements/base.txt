@@ -3,6 +3,6 @@
 money-to-prisoners-common~=21.1.0
 
 # pysftp 0.2.9 imports a type no longer available
-paramiko<4
+paramiko<5
 pysftp~=0.2.9
 bankline-direct-parser==0.8
