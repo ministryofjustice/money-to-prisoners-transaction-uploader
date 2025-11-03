@@ -10,6 +10,11 @@ updates:
     groups:
       minor-updates:
         update-types: [minor, patch]
+    ignore:
+      # TODO: pysftp 0.2.9 imports a type no longer available in paramiko 4+
+      - dependency-name: paramiko
+        versions:
+         - ">=4"
 
   - package-ecosystem: github-actions
     directory: /
