@@ -1,6 +1,6 @@
 # Dependencies needed for all environments
 
-money-to-prisoners-common~=21.2.1
+money-to-prisoners-common~=21.2.5
 
 # TODO: pysftp 0.2.9 imports a type no longer available in paramiko 4+
 paramiko<4
