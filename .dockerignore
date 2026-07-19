@@ -9,6 +9,10 @@
 *.sublime-workspace
 *.sublime-project
 
+# local developer settings, which may hold real credentials; gitignored, but a local
+# `docker build` would otherwise bake them into an image that is now published publicly
+**/settings/local.py
+
 # project
 Dockerfile
 mtp_transaction_uploader/local.py
