@@ -3,6 +3,9 @@
 Reads bank account files via SFTP to facilitate reconciliation by uploading transactions to the API.
 Part of the [Prisoner Money suite of apps](https://github.com/ministryofjustice/money-to-prisoners).
 
+How this app fits into the wider service — architecture, data flows, deployment and
+support — is documented in [money-to-prisoners-deploy](https://github.com/ministryofjustice/money-to-prisoners-deploy/blob/main/docs/README.md).
+
 This app does not have a web interface. It is run as a cron-like job.
 An overview of this application is available [here](OVERVIEW.md).
 ## Requirements
