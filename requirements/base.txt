@@ -6,3 +6,6 @@ money-to-prisoners-common~=21.2.1
 paramiko<4
 pysftp~=0.2.9
 bankline-direct-parser==0.9
+
+# certifi before 2026.10.19 trusts the compromised emSign certificate authority (SMTPS-70)
+certifi>=2026.10.19
