@@ -58,22 +58,10 @@ The following environment variables determine how the uploader works:
 - `SFTP_KNOWN_HOSTS`: Required path to the approved bank OpenSSH `known_hosts` file when the uploader is enabled.
 - `SFTP_DIR`: Directory on SFTP host where files can be found.
 
-Host key verification is mandatory. The uploader uses only `SFTP_KNOWN_HOSTS`, with no
-fallback to user/system trust stores and no automatic acceptance of unknown keys. Missing,
-empty, invalid or unrecognised-host files stop the download; a changed server key fails
-before login. The hostname in the file must match `SFTP_HOST` (or its OpenSSH hashed entry).
-Do not put the user's authentication private key in this file: it contains the bank's
-public server host key, obtained independently from the bank.
-
-In deployed environments the file is mounted read-only alongside the existing SFTP
-private key at `/var/run/secrets/mtp/secret-files/bank-known-hosts`. **Provision and verify
-it before deploying this application change.** Without an approved pin an enabled job
-will fail rather than ingest unauthenticated bank data. Test and parity remain disabled.
-
-For initial provisioning, safe validation and coordinated bank key rotation, follow the
-[bank SFTP host-key runbook](https://github.com/ministryofjustice/money-to-prisoners-deploy/blob/main/docs/bank-sftp-host-keys.md).
-The current pysftp wrapper selects a single key for a hostname: multiple entries are not
-a reliable old/new key rollover mechanism. Keep verification enabled during incidents.
+Host-key verification is mandatory. Provision the bank-verified `known_hosts` file before
+deploying the enabled uploader; the deployment mounts it read-only alongside the SFTP
+private key at `/var/run/secrets/mtp/secret-files/bank-known-hosts`. See the
+[provisioning and rotation runbook](https://github.com/ministryofjustice/money-to-prisoners-deploy/blob/main/docs/bank-sftp-host-keys.md).
 
 #### API Settings
 - `API_URL`: Base URL of API (default: `http://localhost:8000`).

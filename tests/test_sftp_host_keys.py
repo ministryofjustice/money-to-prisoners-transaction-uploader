@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import date
+import io
 from pathlib import Path
 import socket
 import stat
@@ -57,7 +58,6 @@ class BankFiles(paramiko.SFTPServerInterface):
         return [attrs]
 
     def open(self, path, flags, attr):
-        import io
         if path != '/incoming/' + FILENAME:
             return paramiko.SFTP_NO_SUCH_FILE
         handle = paramiko.SFTPHandle(flags)
