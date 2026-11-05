@@ -42,8 +42,11 @@ SenderInformation = namedtuple(
 def download_new_files(last_date: typing.Optional[datetime.date]):
     new_dates = []
     new_filenames = []
-    opts = CnOpts()
-    opts.hostkeys = None
+    if not settings.SFTP_KNOWN_HOSTS:
+        raise ValueError('SFTP_KNOWN_HOSTS must point to the approved bank known_hosts file')
+    opts = CnOpts(knownhosts=settings.SFTP_KNOWN_HOSTS)
+    # Validate the configured host before opening a network connection.
+    opts.get_hostkey(settings.SFTP_HOST)
     with Connection(settings.SFTP_HOST, username=settings.SFTP_USER,
                     private_key=settings.SFTP_PRIVATE_KEY, cnopts=opts) as conn:
         with conn.cd(settings.SFTP_DIR):
