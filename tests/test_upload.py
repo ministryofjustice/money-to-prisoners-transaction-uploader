@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 from unittest import mock, TestCase
 
 from bankline_parser.data_services import parse
@@ -185,6 +186,8 @@ class FileDownloadTestCase(TestCase):
         mock_connection.listdir.return_value = dirlist
         mock_connection.stat.return_value = type('', (), {'st_size': 1000})()
 
+        mock_settings.SFTP_HOST = 'bank.example.test'
+        mock_settings.SFTP_KNOWN_HOSTS = str(Path(__file__).parent / 'data' / 'known_hosts')
         mock_settings.ACCOUNT_CODE = '444444'
         mock_settings.DS_NEW_FILES_DIR = '/'
 
@@ -332,6 +335,8 @@ class FileDownloadTestCase(TestCase):
             type('', (), {'st_size': 1000})(),
         ]
 
+        mock_settings.SFTP_HOST = 'bank.example.test'
+        mock_settings.SFTP_KNOWN_HOSTS = str(Path(__file__).parent / 'data' / 'known_hosts')
         mock_settings.ACCOUNT_CODE = '444444'
         mock_settings.DS_NEW_FILES_DIR = '/'
 
@@ -387,6 +392,8 @@ class RetrieveNewFilesTestCase(TestCase):
         mock_connection.listdir.return_value = dirlist
         mock_connection.stat.return_value = type('', (), {'st_size': 1000})()
 
+        mock_settings.SFTP_HOST = 'bank.example.test'
+        mock_settings.SFTP_KNOWN_HOSTS = str(Path(__file__).parent / 'data' / 'known_hosts')
         mock_settings.ACCOUNT_CODE = '444444'
         mock_settings.DS_NEW_FILES_DIR = '/'
         mock_os.path.join = lambda a, b: a + b
@@ -427,6 +434,8 @@ class RetrieveNewFilesTestCase(TestCase):
         mock_connection.listdir.return_value = dirlist
         mock_connection.stat.return_value = type('', (), {'st_size': 1000})()
 
+        mock_settings.SFTP_HOST = 'bank.example.test'
+        mock_settings.SFTP_KNOWN_HOSTS = str(Path(__file__).parent / 'data' / 'known_hosts')
         mock_settings.ACCOUNT_CODE = '444444'
         mock_settings.DS_NEW_FILES_DIR = '/'
         mock_os.path.join = lambda a, b: a + b

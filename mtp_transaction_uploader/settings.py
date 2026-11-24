@@ -13,6 +13,7 @@ SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
 SFTP_HOST = os.environ.get('SFTP_HOST', '')
 SFTP_USER = os.environ.get('SFTP_USER', '')
 SFTP_PRIVATE_KEY = os.environ.get('SFTP_PRIVATE_KEY', '~/.ssh/id_rsa')
+SFTP_KNOWN_HOSTS = os.environ.get('SFTP_KNOWN_HOSTS', '')
 SFTP_DIR = os.environ.get('SFTP_DIR', '')
 ACCOUNT_CODE = os.environ.get('ACCOUNT_CODE', '444444')
 

@@ -55,7 +55,13 @@ The following environment variables determine how the uploader works:
 - `SFTP_HOST`: Host to download data services files from.
 - `SFTP_USER`: SFTP username.
 - `SFTP_PRIVATE_KEY`: Private key for SFTP user (default: `~/.ssh/id_rsa`).
+- `SFTP_KNOWN_HOSTS`: Required path to the approved bank OpenSSH `known_hosts` file when the uploader is enabled.
 - `SFTP_DIR`: Directory on SFTP host where files can be found.
+
+Host-key verification is mandatory. Provision the approved `known_hosts` file before
+deploying the enabled uploader; the deployment mounts it read-only alongside the SFTP
+private key at `/var/run/secrets/mtp/secret-files/bank-known-hosts`. See the
+[provisioning and rotation runbook](https://github.com/ministryofjustice/money-to-prisoners-deploy/blob/main/docs/bank-sftp-host-keys.md).
 
 #### API Settings
 - `API_URL`: Base URL of API (default: `http://localhost:8000`).

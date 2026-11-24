@@ -69,7 +69,7 @@ def main():
 
     # ensure all required parameters are set
     missing_params = []
-    required_params = {'SFTP_HOST', 'SFTP_USER', 'SFTP_PRIVATE_KEY', 'ACCOUNT_CODE',
+    required_params = {'SFTP_HOST', 'SFTP_USER', 'SFTP_PRIVATE_KEY', 'SFTP_KNOWN_HOSTS', 'ACCOUNT_CODE',
                        'API_URL', 'API_CLIENT_ID', 'API_CLIENT_SECRET',
                        'API_USERNAME', 'API_PASSWORD'}
     for param in dir(settings):
